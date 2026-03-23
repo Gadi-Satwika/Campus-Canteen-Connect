@@ -1,0 +1,99 @@
+/* src/styles/Admin.css */
+:root {
+  --maroon: #800000;
+  --dark-slate: #0f172a;
+  --border: rgba(0, 0, 0, 0.08);
+  --success: #10b981;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100vh;
+  background-color: #f1f5f9;
+}
+
+.admin-sidebar {
+  background: var(--dark-slate);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-logo {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #f1f5f9;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.nav-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-item.active {
+  background: var(--maroon);
+  color: white;
+}
+
+.admin-main {
+  padding: 2rem 3rem;
+  overflow-y: auto;
+}
+
+/* Stats Cards for real-world feel */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.admin-content-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+}
+
+/* Professional Table/Form */
+.input-field {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+}
+
+.input-field:focus { border-color: var(--maroon); }
+
+.primary-btn {
+  background: var(--maroon);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
