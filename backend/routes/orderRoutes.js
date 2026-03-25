@@ -1,57 +1,113 @@
 const express = require('express');
 const router = express.Router();
-const FoodItem = require('../models/FoodItem'); // Check if this file exists!
-const Order = require('../models/Order');       // Check if this file exists!
+const Order = require('../models/Order');  
+const transporter = require('../config/mailer');     
 
-// This is for the STUDENT to buy food
-router.post('/place', async (req, res) => {
+// 1. GET CURRENT SERVING (Polled every 5s by Menu.jsx)
+router.get('/current-serving', async (req, res) => {
     try {
-        const { itemId, userId, quantityRequested } = req.body;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        const updatedItem = await FoodItem.findOneAndUpdate(
-            { _id: itemId, quantity: { $gte: quantityRequested } },
-            { $inc: { quantity: -quantityRequested } },
-            { new: true }
-        );
+        // Logic: Find the highest token number currently marked as 'Ready'
+        const currentOrder = await Order.findOne({
+            createdAt: { $gte: today },
+            status: 'Ready'
+        }).sort({ tokenNumber: -1 }); 
 
-        if (!updatedItem) return res.status(400).json({ message: "Out of stock!" });
-
-        const otp = Math.floor(100000 + Math.random() * 900000);
-        const newOrder = await Order.create({
-            user: userId,
-            item: itemId,
-            quantity: quantityRequested,
-            otp: otp
-        });
-
-        res.status(201).json({ success: true, order: newOrder });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.json({ tokenNumber: currentOrder ? currentOrder.tokenNumber : 0 });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
-// GET: Admin - Fetch all live orders with item details
+// 2. PLACE ORDER
+router.post('/place', async (req, res) => {
+    try {
+        // FIXED: Destructured userEmail from req.body so it isn't "undefined"
+        const { items, totalAmount, userName, userEmail, dorm, paymentMethod } = req.body;
+
+        const start = new Date();
+        start.setHours(0,0,0,0);
+        const end = new Date();
+        end.setHours(23,59,59,999);
+
+        const todayOrderCount = await Order.countDocuments({
+            createdAt: { $gte: start, $lte: end }
+        });
+
+        const tokenNumber = todayOrderCount + 1;
+
+        const newOrder = new Order({
+            items,
+            totalAmount,
+            userName,
+            userEmail, // Now defined!
+            dorm,
+            paymentMethod,
+            tokenNumber,
+            status: 'Preparing',
+            otp: Math.floor(100000 + Math.random() * 900000)
+        });
+
+        const savedOrder = await newOrder.save();
+        res.status(201).json(savedOrder);
+    } catch (err) {
+        console.error("Place Order Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. GET ALL ORDERS (History for last 10 days)
 router.get('/all', async (req, res) => {
     try {
-        // .populate('item') fills the item ID with actual name/price from the FoodItem model
-        const orders = await Order.find().populate('item').sort({ createdAt: -1 });
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+
+        const orders = await Order.find({
+            createdAt: { $gte: tenDaysAgo }
+        }).sort({ createdAt: -1 });
+        
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-router.put('/update/:id', async (req, res) => {
+// 4. UPDATE STATUS & SEND EMAIL
+router.put('/status/:id', async (req, res) => {
     try {
-        const order = await Order.findByIdAndUpdate(
-            req.params.id, 
-            { status: 'Completed' }, 
-            { new: true }
-        );
+        const { status } = req.body;
+        const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+
+        if (status === 'Ready' && order && order.userEmail) {
+            const mailOptions = {
+                from: '"RKV Canteen"',
+                to: order.userEmail,
+                subject: `Order Ready! Token #${order.tokenNumber}`,
+                html: `<h1>Hi ${order.userName}, your order is ready for collection!</h1>`
+            };
+            transporter.sendMail(mailOptions);
+        }
         res.json(order);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 5. GET SINGLE ORDER (For Scanner)
+router.get('/:id', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: "Order Not Found" });
+        res.json(order);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 6. DELETE ORDER
+router.delete('/:id', async (req, res) => {
+    try {
+        await Order.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Deleted" });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;

@@ -1,33 +1,110 @@
-import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { auth } from '../../firebase';
+import AdminBackground from '../../components/AdminBackground';
 
 const AdminLayout = () => {
-  const sidebarStyle = {
-    width: '280px', height: '100vh', background: '#0f172a', color: 'white',
-    padding: '2.5rem 1.5rem', position: 'fixed', left: 0, top: 0
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    navigate('/');
   };
 
+  const sidebarWidth = isExpanded ? '260px' : '80px';
+
   const navItem = ({ isActive }) => ({
-    display: 'block', padding: '16px 20px', borderRadius: '12px',
-    marginBottom: '10px', textDecoration: 'none',
-    background: isActive ? 'linear-gradient(135deg, #800000 0%, #4a0000 100%)' : 'transparent',
-    color: isActive ? 'white' : '#94a3b8', transition: '0.3s', fontWeight: '600'
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+    padding: '16px 25px',
+    textDecoration: 'none',
+    transition: 'all 0.3s ease',
+    color: isActive ? '#800000' : '#64748B',
+    background: isActive ? '#FFF5F5' : 'transparent',
+    borderRight: isActive ? '4px solid #800000' : '4px solid transparent',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden'
   });
 
   return (
-    <div style={{ display: 'flex', background: '#0f172a', minHeight: '100vh' }}>
-      <aside style={sidebarStyle}>
-        <h2 style={{ color: '#facc15', marginBottom: '3rem' }}>RKV <span style={{color: '#fff'}}>PRO</span></h2>
-        <nav>
-          <NavLink to="/admin/dashboard" style={navItem}>📊 Dashboard</NavLink>
-          <NavLink to="/admin/inventory" style={navItem}>📦 Inventory</NavLink>
-          <NavLink to="/admin/orders" style={navItem}>🛒 Live Orders</NavLink>
-        </nav>
-      </aside>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F8FAFC' }}>
+      <AdminBackground />
 
-      <main style={{ flex: 1, marginLeft: '280px', padding: '3rem', background: 'radial-gradient(circle at top right, #1e293b, #0f172a)', color: 'white' }}>
-        <Outlet /> {/* This is where the sub-pages load! */}
-      </main>
+      {/* GLASS TOP BAR */}
+      <header style={{
+        height: '70px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '0 30px', borderBottom: '1px solid #E2E8F0', position: 'fixed', 
+        top: 0, width: '100%', zIndex: 1100, boxSizing: 'border-box'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '32px', height: '32px', background: '#800000', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>R</div>
+          <h2 style={{ color: '#1E293B', fontSize: '1.1rem', margin: 0, letterSpacing: '0.5px' }}>CAMPUS <span style={{fontWeight: '400'}}>CONNECT</span></h2>
+        </div>
+        <button onClick={handleLogout} style={{
+          background: '#FFF1F2', border: '1px solid #FECACA', color: '#E11D48', 
+          padding: '8px 20px', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '0.85rem', transition: '0.2s'
+        }} onMouseOver={(e) => e.target.style.background = '#FFE4E6'} onMouseOut={(e) => e.target.style.background = '#FFF1F2'}>
+          Logout
+        </button>
+      </header>
+
+      <div style={{ display: 'flex', marginTop: '70px', flex: 1 }}>
+        {/* HOVER EXPANDABLE SIDEBAR (LEFT) */}
+        <aside 
+          onMouseEnter={() => setIsExpanded(true)}
+          onMouseLeave={() => setIsExpanded(false)}
+          style={{
+            width: sidebarWidth,
+            background: 'white',
+            borderRight: '1px solid #E2E8F0',
+            position: 'fixed',
+            left: 0,
+            top: '70px',
+            bottom: 0,
+            zIndex: 1000,
+            transition: 'width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            overflow: 'hidden',
+            boxShadow: isExpanded ? '10px 0 30px rgba(0,0,0,0.05)' : 'none'
+          }}
+        >
+          <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column' }}>
+            <NavLink to="/admin/dashboard" style={navItem}>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>📊</span>
+              <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Dashboard</span>
+            </NavLink>
+            
+            <NavLink to="/admin/inventory" style={navItem}>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>📦</span>
+              <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Inventory</span>
+            </NavLink>
+            
+            <NavLink to="/admin/orders" style={navItem}>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛒</span>
+              <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Live Orders</span>
+            </NavLink>
+          </div>
+
+          <div style={{ position: 'absolute', bottom: '30px', width: '100%', padding: '0 25px', opacity: isExpanded ? 1 : 0, transition: '0.2s' }}>
+             <p style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>SYSTEM v1.0.2</p>
+          </div>
+        </aside>
+
+        {/* CONTENT AREA */}
+        <main style={{ 
+          flex: 1, 
+          marginLeft: '80px', // Matches collapsed sidebar width
+          padding: '40px', 
+          boxSizing: 'border-box',
+          transition: 'margin-left 0.4s ease' // Optional: move content when sidebar expands
+        }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

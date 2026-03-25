@@ -5,57 +5,52 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ items: 0, orders: 0, lowStock: 0 });
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
+    const fetchStats = async () => {
       try {
         const resItems = await axios.get('http://localhost:5000/api/food/menu');
         const resOrders = await axios.get('http://localhost:5000/api/orders/all');
-        
         setStats({
           items: resItems.data.length,
           orders: resOrders.data.filter(o => o.status === 'Pending').length,
           lowStock: resItems.data.filter(i => i.quantity < 5).length
         });
-      } catch (err) { console.error("Stats Fetch Error:", err); }
+      } catch (err) { console.error(err); }
     };
-    fetchDashboardStats();
+    fetchStats();
   }, []);
 
   const cardStyle = { 
-    background: 'rgba(255, 255, 255, 0.03)', 
-    padding: '2.5rem', 
-    borderRadius: '24px', 
-    border: '1px solid rgba(255,255,255,0.1)',
-    textAlign: 'center'
+    background: '#FFFFFF', padding: '2rem', borderRadius: '20px', 
+    boxShadow: '0 4px 12px rgba(0,0,0,0.03)', border: '1px solid #F1F5F9'
   };
-
-  const labelStyle = { color: '#94a3b8', fontWeight: '600', marginBottom: '10px' };
-  const valueStyle = { fontSize: '3rem', fontWeight: '900', margin: 0, background: 'linear-gradient(to right, #facc15, #eab308)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
 
   return (
     <div>
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', margin: 0 }}>Executive Insights</h1>
-        <p style={{ color: '#94a3b8' }}>Real-time overview of RGUKT Canteen operations</p>
-      </header>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
+      <h1 style={{ color: '#1E293B', fontSize: '2rem', marginBottom: '2rem' }}>Morning, Admin!</h1>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
         <div style={cardStyle}>
-          <p style={labelStyle}>MENU REPOSITORY</p>
-          <h2 style={valueStyle}>{stats.items}</h2>
-          <p style={{fontSize: '0.8rem', color: '#10b981'}}>Active Items</p>
+          <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: '700' }}>TOTAL MENU ITEMS</span>
+          <h2 style={{ fontSize: '2.5rem', color: '#1E293B', margin: '10px 0' }}>{stats.items}</h2>
+          <div style={{ height: '4px', background: '#800000', width: '40px', borderRadius: '2px' }}></div>
         </div>
 
         <div style={cardStyle}>
-          <p style={labelStyle}>LIVE TRAFFIC</p>
-          <h2 style={{...valueStyle, background: 'linear-gradient(to right, #ff4d4d, #800000)', WebkitBackgroundClip: 'text'}}>{stats.orders}</h2>
-          <p style={{fontSize: '0.8rem', color: '#ff4d4d'}}>Pending Orders</p>
+          <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: '700' }}>PENDING ORDERS</span>
+          <h2 style={{ fontSize: '2.5rem', color: '#800000', margin: '10px 0' }}>{stats.orders}</h2>
+          <div style={{ height: '4px', background: '#FBBF24', width: '40px', borderRadius: '2px' }}></div>
         </div>
 
         <div style={cardStyle}>
-          <p style={labelStyle}>INVENTORY ALERTS</p>
-          <h2 style={{...valueStyle, background: 'linear-gradient(to right, #fbbf24, #d97706)', WebkitBackgroundClip: 'text'}}>{stats.lowStock}</h2>
-          <p style={{fontSize: '0.8rem', color: '#fbbf24'}}>Critical Items</p>
+          <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: '700' }}>STOCK ALERTS</span>
+          <h2 style={{ fontSize: '2.5rem', color: stats.lowStock > 0 ? '#EF4444' : '#10B981', margin: '10px 0' }}>{stats.lowStock}</h2>
+          <div style={{ height: '4px', background: stats.lowStock > 0 ? '#EF4444' : '#10B981', width: '40px', borderRadius: '2px' }}></div>
         </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginTop: '2rem', background: '#FFFDF5' }}>
+        <h3 style={{ margin: 0, color: '#800000' }}>System Status</h3>
+        <p style={{ color: '#64748B', fontSize: '0.9rem' }}>All backend services are operational. Inventory is synced with student app.</p>
       </div>
     </div>
   );

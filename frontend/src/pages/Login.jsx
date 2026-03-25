@@ -20,7 +20,7 @@ const Login = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const email = result.user.email;
-      if (email.endsWith("@rguktrkv.ac.in") || email === "canteen.staff@rguktrkv.ac.in") {
+      if (email.endsWith("@rguktrkv.ac.in") || email === "canteenStaffRgukt@gmail.com") {
         email === "canteen.staff@rguktrkv.ac.in" ? navigate('/admin/dashboard') : navigate('/menu');
       } else {
         await auth.signOut();
