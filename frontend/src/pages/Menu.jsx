@@ -41,16 +41,22 @@ const Menu = () => {
   }, []);
 
   useEffect(() => {
-    const getServing = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/orders/current-serving');
+  const getServing = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/orders/current-serving');
+      // Logic: If backend sends { tokenNumber: 5 }, we set it here
+      if (res.data && res.data.tokenNumber !== undefined) {
         setCurrentServing(res.data.tokenNumber);
-      } catch (e) { console.log("Serving fetch error"); }
-    };
-    getServing();
-    const interval = setInterval(getServing, 5000);
-    return () => clearInterval(interval);
-  }, []);
+      }
+    } catch (e) { 
+      console.log("Serving fetch error - Check if backend route /current-serving exists"); 
+    }
+  };
+
+  getServing();
+  const interval = setInterval(getServing, 5000); // Check every 5 seconds
+  return () => clearInterval(interval);
+}, []);
 
   const addToCart = (item) => {
     const exists = cart.find(i => i._id === item._id);
@@ -124,15 +130,54 @@ const Menu = () => {
       </div>
 
       {/* ITEMS LIST */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-        {items.map(item => (
-          <div key={item._id} style={{ background: 'white', padding: '20px', borderRadius: '20px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-            <h3>{item.name}</h3>
-            <p style={{ color: '#800000', fontWeight: 'bold' }}>₹{item.price}</p>
-            <button onClick={() => addToCart(item)} style={{ width: '100%', padding: '10px', background: '#FEE2E2', color: '#800000', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>Add to Cart</button>
-          </div>
-        ))}
+      {/* MENU GRID - UPDATED FOR RESPONSIVENESS & IMAGES */}
+<div style={{ 
+  display: 'grid', 
+  // This line makes it 1 column on mobile and 3+ on desktop automatically
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+  gap: '25px', 
+  marginTop: '30px' 
+}}>
+  {items.map(item => (
+    <div key={item._id} style={{ 
+      background: 'white', 
+      borderRadius: '25px', 
+      overflow: 'hidden', // Keeps the image corners rounded
+      boxShadow: '0 10px 20px rgba(0,0,0,0.03)',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* FEATURE: Item Image */}
+      <img 
+        src={item.image || 'https://via.placeholder.com/300x200?text=No+Image'} 
+        alt={item.name} 
+        style={{ width: '100%', height: '180px', objectFit: 'cover' }} 
+      />
+      
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h3 style={{ margin: '0 0 5px 0', color: '#1E293B' }}>{item.name}</h3>
+        <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '15px' }}>{item.category || 'Delicious Food'}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+          <span style={{ color: '#800000', fontWeight: '900', fontSize: '1.4rem' }}>₹{item.price}</span>
+          <button 
+            onClick={() => addToCart(item)}
+            style={{ 
+              background: '#800000', 
+              color: 'white', 
+              border: 'none', 
+              padding: '10px 20px', 
+              borderRadius: '12px', 
+              cursor: 'pointer', 
+              fontWeight: 'bold' 
+            }}
+          >
+            Add +
+          </button>
+        </div>
       </div>
+    </div>
+  ))}
+</div>
 
       {/* FLOATING CART BUTTON */}
       {cart.length > 0 && (

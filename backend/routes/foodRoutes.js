@@ -5,14 +5,26 @@ const FoodItem = require('../models/FoodItem');
 // Add new food item
 router.post('/add', async (req, res) => {
     try {
-        const newItem = new FoodItem(req.body);
-        await newItem.save();
-        res.status(201).json(newItem);
+        // 1. Destructure ALL fields from the frontend request
+        const { name, price, image, category, quantity } = req.body;
+
+        // 2. Create the new item with the quantity field
+        const newItem = new FoodItem({
+            name,
+            price: Number(price),
+            image,
+            category,
+            quantity: Number(quantity), // THIS IS THE MISSING PIECE
+            isAvailable: true
+        });
+
+        const savedItem = await newItem.save();
+        res.status(201).json(savedItem);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        console.error("Save Error:", err.message);
+        res.status(500).json({ error: err.message });
     }
 });
-
 // Get all items for the Student Menu
 router.get('/menu', async (req, res) => {
     try {

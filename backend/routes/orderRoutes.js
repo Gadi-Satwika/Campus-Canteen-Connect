@@ -9,13 +9,13 @@ router.get('/current-serving', async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Logic: Find the highest token number currently marked as 'Ready'
-        const currentOrder = await Order.findOne({
+        // Find the LATEST order that was moved to 'Ready' status today
+        const servingOrder = await Order.findOne({
             createdAt: { $gte: today },
             status: 'Ready'
-        }).sort({ tokenNumber: -1 }); 
+        }).sort({ updatedAt: -1 }); // Sort by most recent update
 
-        res.json({ tokenNumber: currentOrder ? currentOrder.tokenNumber : 0 });
+        res.json({ tokenNumber: servingOrder ? servingOrder.tokenNumber : 0 });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
