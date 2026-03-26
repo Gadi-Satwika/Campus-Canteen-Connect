@@ -48,6 +48,17 @@ const FoodForm = () => {
       <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#64748b'}}>PRICE (₹)</label>
       <input type="number" placeholder="0" style={inputStyle} value={food.price} onChange={(e)=>setFood({...food, price: e.target.value})} required />
 
+      <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#64748b'}}>CATEGORY</label>
+      <select 
+        style={inputStyle} 
+        value={food.category} 
+        onChange={(e) => setFood({...food, category: e.target.value})}
+      >
+        <option value="Breakfast">Breakfast</option>
+        <option value="Lunch">Lunch</option>
+        <option value="Snacks">Snacks</option>
+      </select>
+
       <label style={{fontSize: '0.85rem', fontWeight: '600', color: '#64748b'}}>ITEM IMAGE URL</label>
       <input 
         type="text"
