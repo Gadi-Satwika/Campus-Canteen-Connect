@@ -9,6 +9,7 @@ const LiveOrders = () => {
   const [viewHistory, setViewHistory] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
 
+
   // 1. DATABASE FETCH: Polling every 5 seconds
   const fetchOrders = async () => {
     try {
@@ -16,6 +17,34 @@ const LiveOrders = () => {
       setAllOrders(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error("Database Fetch Error:", err); }
   };
+
+
+ const handleDelete = async (orderId, userEmail) => {
+  const reason = window.prompt("Reason for cancellation (will be emailed to student):");
+  if (!reason) return;
+
+  try {
+    // 1. UPDATE STATUS TO DELETED
+    await axios.put(`http://localhost:5000/api/orders/status/${orderId}`, { 
+      status: 'Deleted',
+      reason: reason 
+    });
+
+    // 2. TRIGGER EMAIL
+    await axios.post(`http://localhost:5000/api/orders/send-cancellation-email`, {
+      email: userEmail,
+      reason: reason,
+      orderId: orderId
+    });
+
+    alert("✅ Order Cancelled and Email Sent!");
+    fetchOrders(); // Refresh the list to remove the card
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error: Order status updated but email might have failed.");
+    fetchOrders(); 
+  }
+};
 
   useEffect(() => {
     fetchOrders();
@@ -52,13 +81,26 @@ const LiveOrders = () => {
     } catch (err) { alert("❌ Action failed."); }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Delete record permanently?")) {
-      await axios.delete(`http://localhost:5000/api/orders/${id}`);
-      fetchOrders();
-      if (scannedOrder?._id === id) setScannedOrder(null);
+  // inside Admin LiveOrders.jsx
+
+const handleDeleteOrder = async (id) => {
+    const reason = window.prompt("Enter reason for cancellation (sent to student email):");
+    if (reason) {
+        try {
+            await axios.put(`http://localhost:5000/api/orders/status/${id}`, { 
+                status: 'Deleted',
+                reason: reason 
+            });
+            alert("Order marked as Deleted and Student notified.");
+            fetchOrders(); // Refresh the list
+        } catch (err) { alert("Action failed."); }
     }
-  };
+};
+
+// In your JSX button:
+<button onClick={() => handleDeleteOrder(order._id)} style={{ color: 'red' }}>
+  🗑️ Cancel Order
+</button>
 
   const fetchManual = async () => {
     const id = document.getElementById('manualInput').value;
@@ -71,14 +113,19 @@ const LiveOrders = () => {
   };
 
   // 4. DATA GROUPING (Live vs 10-Day History)
-  const todayStr = new Date().toDateString();
-  const liveStream = allOrders.filter(o => 
-    new Date(o.createdAt).toDateString() === todayStr && o.status !== 'Collected'
-  );
+  // 4. DATA GROUPING (Live vs 10-Day History)
+const todayStr = new Date().toDateString();
 
-  const filteredLive = liveStream.filter(o => 
-    o.userName.toLowerCase().includes(searchTerm.toLowerCase()) || String(o.tokenNumber).includes(searchTerm)
-  );
+const liveStream = allOrders.filter(o => 
+  new Date(o.createdAt).toDateString() === todayStr && 
+  o.status !== 'Collected' && 
+  o.status !== 'Deleted' // FIX: Hide deleted orders from the live feed
+);
+
+const filteredLive = liveStream.filter(o => 
+  o.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  String(o.tokenNumber).includes(searchTerm)
+);
 
   // Group history by date for the last 10 days
   const groupedHistory = allOrders
@@ -89,6 +136,11 @@ const LiveOrders = () => {
       groups[date].push(order);
       return groups;
     }, {});
+
+  // In Admin's LiveOrders.jsx or similar
+  const markAsReady = async (orderId) => {
+    await axios.put(`http://localhost:5000/api/orders/update/${orderId}`, { status: 'Ready' });
+  };
 
   return (
     <div style={{ padding: '20px', background: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
@@ -112,22 +164,33 @@ const LiveOrders = () => {
         /* --- LIVE FEED SECTION --- */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {filteredLive.length > 0 ? filteredLive.map(order => (
-            <div key={order._id} style={{ background: 'white', padding: '20px', borderRadius: '25px', border: `2px solid ${order.status === 'Ready' ? '#16A34A' : '#E2E8F0'}`, boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <h2 style={{ margin: 0, color: '#800000' }}>#{order.tokenNumber}</h2>
-                <button onClick={() => handleDelete(order._id)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>🗑️</button>
-              </div>
-              <p style={{ fontWeight: 'bold', margin: '10px 0' }}>{order.userName}</p>
-              <div style={{ background: '#F8FAFC', padding: '10px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '15px' }}>
-                {order.items.map((it, idx) => <div key={idx}>{it.name} x{it.quantity}</div>)}
-              </div>
-              {order.status === 'Preparing' ? (
-                <button onClick={() => handleStatusUpdate(order._id, 'Ready')} style={{ width: '100%', padding: '12px', background: '#F59E0B', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold' }}>Mark Ready 🔔</button>
-              ) : (
-                <div style={{ textAlign: 'center', color: '#16A34A', fontWeight: 'bold' }}>WAITING FOR SCAN...</div>
-              )}
-            </div>
-          )) : (
+  <div key={order._id} style={{ background: 'white', padding: '20px', borderRadius: '25px', border: `2px solid ${order.status === 'Ready' ? '#16A34A' : '#E2E8F0'}`, boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <h2 style={{ margin: 0, color: '#800000' }}>#{order.tokenNumber}</h2>
+      {/* FIX: Passing both ID and Email to the function */}
+      <button onClick={() => handleDelete(order._id, order.userEmail)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🗑️</button>
+    </div>
+    <p style={{ fontWeight: 'bold', margin: '10px 0' }}>{order.userName}</p>
+    
+    <div style={{ background: '#F8FAFC', padding: '10px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '15px' }}>
+      {order.items.map((it, idx) => <div key={idx}>{it.name} x{it.quantity}</div>)}
+    </div>
+
+    {/* EXPLICIT STATUS CHECK */}
+    {order.status === 'Ready' ? (
+      <div style={{ textAlign: 'center', color: '#16A34A', fontWeight: 'bold', padding: '12px', border: '1px solid #16A34A', borderRadius: '12px' }}>
+        WAITING FOR SCAN...
+      </div>
+    ) : (
+      <button 
+        onClick={() => handleStatusUpdate(order._id, 'Ready')} 
+        style={{ width: '100%', padding: '12px', background: '#F59E0B', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+      >
+        Mark Ready 🔔
+      </button>
+    )}
+  </div>
+)) : (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px' }}>
               <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" style={{ width: '120px', opacity: 0.2 }} alt="" />
               <h3 style={{ color: '#94A3B8' }}>No active orders for now.</h3>

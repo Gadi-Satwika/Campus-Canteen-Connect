@@ -68,10 +68,6 @@ const AdminComplaints = () => {
 
                         <h3 style={{ margin: '0 0 10px 0', color: c.status === 'Withdrawn' ? '#94A3B8' : '#1E293B' }}>{c.subject}</h3>
                         <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: '1.5' }}>{c.message}</p>
-                        
-                        <div style={{ fontSize: '0.8rem', marginTop: '15px', borderTop: '1px solid #F1F5F9', paddingTop: '10px', color: '#64748B' }}>
-                            <strong>By:</strong> {c.studentName}
-                        </div>
 
                         {/* --- STATUS-BASED ACTIONS --- */}
                         <div style={{ marginTop: '20px' }}>

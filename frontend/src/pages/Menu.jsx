@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { QRCodeCanvas } from 'qrcode.react';
-import html2canvas from 'html2canvas';
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 
 import SpecialOrders from '../components/SpecialOrders';
+import AnnouncementModal from '../components/AnnouncementModal';
+import SupportModal from '../components/SupportModal';
+import HistoryModal from '../components/HistoryModal';
+import CartDrawer from '../components/CartDrawer';
 
 const Menu = () => {
   // --- STATE ---
@@ -127,30 +129,6 @@ const Menu = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Add this to sync your LocalStorage history with the Database status
-  useEffect(() => {
-    const syncHistoryStatus = async () => {
-      if (userDetails.email) {
-        try {
-          // Fetch fresh orders from DB to get the LATEST status
-          const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
-          
-          // Update the state so the "Badge" changes color immediately
-          setHistory(res.data);
-          
-          // Update LocalStorage so it's fresh for the next refresh
-          localStorage.setItem('orderHistory', JSON.stringify(res.data));
-        } catch (err) {
-          console.error("Status sync failed");
-        }
-      }
-    };
-
-    // Sync once on load, then every 20 seconds to catch Admin updates
-    syncHistoryStatus();
-    const interval = setInterval(syncHistoryStatus, 20000);
-    return () => clearInterval(interval);
-  }, [userDetails.email]);
 
   // --- ACTIONS ---
   const addToCart = (item) => {
@@ -161,15 +139,60 @@ const Menu = () => {
   const updateQty = (id, delta) => setCart(prev => prev.map(item => item._id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
   const removeFromCart = (id) => setCart(cart.filter(item => item._id !== id));
 
-  const handlePlaceOrder = async () => {
-    if (!userDetails.name || !userDetails.email || !userDetails.dorm) return alert("Fill all details!");
-    const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    const orderPayload = { items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })), totalAmount: total, userName: userDetails.name, userEmail: userDetails.email, dorm: userDetails.dorm, paymentMethod: userDetails.method };
-    try {
-      const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
-      setHistory([res.data, ...history]); setOrderSummary(res.data); setCart([]); setShowCart(false); setCheckoutStep(1);
-    } catch (err) { alert("Order Failed!"); }
+  // 1. Unified Sync Function
+const syncHistory = async () => {
+  if (!userDetails.email) return;
+  try {
+    const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
+    console.log("SYNC DATA FROM DB:", res.data); // <-- CHECK THIS IN CONSOLE
+    
+    if (res.data && Array.isArray(res.data)) {
+      // Sort: Newest orders first
+      const sorted = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setHistory(sorted);
+      // Update local storage so it stays fresh
+      localStorage.setItem('orderHistory', JSON.stringify(sorted));
+    }
+  } catch (err) {
+    console.error("DATABASE SYNC FAILED:", err);
+  }
+};
+
+// 2. The Place Order Fix
+const handlePlaceOrder = async () => {
+  if (!userDetails.name || !userDetails.email || !userDetails.dorm) return alert("Fill all details!");
+  
+  const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const orderPayload = { 
+    items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })), 
+    totalAmount: total, 
+    userName: userDetails.name, 
+    userEmail: userDetails.email, // Ensure this matches Admin handleDelete
+    dorm: userDetails.dorm, 
+    paymentMethod: userDetails.method 
   };
+
+  try {
+    const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
+    // Add the new order to the top of history immediately
+    setHistory(prev => [res.data, ...prev]);
+    setOrderSummary(res.data);
+    setCart([]);
+    setShowCart(false);
+    setCheckoutStep(1);
+    // Force a sync to make sure everything is aligned
+    syncHistory();
+  } catch (err) {
+    alert("Order Failed!");
+  }
+};
+
+// Unified Polling Effect
+useEffect(() => {
+  syncHistory(); // Initial load
+  const interval = setInterval(syncHistory, 7000); // Poll every 7s
+  return () => clearInterval(interval);
+}, [userDetails.email]);
 
   const particlesInit = async (engine) => { await loadSlim(engine); };
 
@@ -250,203 +273,47 @@ const Menu = () => {
         <h1 style={{ margin: 0, fontSize: '2.0rem', fontWeight: '900' }}>{currentServing || '--'}</h1>
       </div>
 
-      {/* --- CART DRAWER (ORIGINAL STYLE) --- */}
-      {showCart && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 4000, display: 'flex', justifyContent: 'flex-end', backdropFilter: 'blur(5px)' }}>
-          <button 
-              onClick={() => setShowCart(false)} 
-              style={{ background: 'none', border: 'none', fontSize: '2.5rem', cursor: 'pointer', color: '#94A3B8', lineHeight: 1 }}
-            >
-              ×
-            </button>
-          <div style={{ width: '100%', maxWidth: '450px', background: 'white', height: '100%', padding: '40px', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ color: '#800000' }}>{checkoutStep === 1 ? '🛒 Your Cart' : 'Checkout Details'}</h2>
-            {cart.length === 0 ? <div style={{ flex: 1, textAlign: 'center', marginTop: '100px' }}><h3>Your cart is empty</h3></div> : (
-              checkoutStep === 1 ? (
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                  {cart.map(item => (
-                    <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: '#F8FAFC', borderRadius: '20px', marginBottom: '15px' }}>
-                      <div><strong>{item.name}</strong><br/><span>₹{item.price * item.quantity}</span></div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <button onClick={() => updateQty(item._id, -1)}>-</button><span style={{ fontWeight: 'bold' }}>{item.quantity}</span><button onClick={() => updateQty(item._id, 1)}>+</button>
-                        <button onClick={() => removeFromCart(item._id)} style={{ color: 'red', background: 'none', border: 'none' }}>🗑️</button>
-                      </div>
-                    </div>
-                  ))}
-                  <button onClick={() => setCheckoutStep(2)} style={{ width: '100%', marginTop: '30px', padding: '20px', background: '#800000', color: 'white', borderRadius: '15px', fontWeight: 'bold' }}>Proceed to Checkout</button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <input placeholder="Name" value={userDetails.name} onChange={e => setUserDetails({...userDetails, name: e.target.value})} style={{ padding: '15px', borderRadius: '12px', border: '1px solid #DDD' }} />
-                  <input placeholder="Email" value={userDetails.email} onChange={e => setUserDetails({...userDetails, email: e.target.value})} style={{ padding: '15px', borderRadius: '12px', border: '1px solid #DDD' }} />
-                  <input placeholder="Dorm" value={userDetails.dorm} onChange={e => setUserDetails({...userDetails, dorm: e.target.value})} style={{ padding: '15px', borderRadius: '12px', border: '1px solid #DDD' }} />
-                  <button onClick={handlePlaceOrder} style={{ padding: '20px', background: '#16A34A', color: 'white', borderRadius: '15px', fontWeight: 'bold' }}>Confirm & Pay Now</button>
-                  <button onClick={() => setCheckoutStep(1)} style={{ background: 'none', border: 'none', color: '#64748B' }}>Back</button>
-                </div>
-              )
-            )}
-            <button onClick={() => setShowCart(false)} style={{ marginTop: '20px' }}>Close Cart</button>
-          </div>
-        </div>
-      )}
+    <AnnouncementModal 
+      isOpen={openAnnounce} 
+      onClose={() => setOpenAnnounce(false)} 
+      announcement={announcement} 
+    />
 
-      {/* --- ANNOUNCEMENT MODAL (RESTORED UI) --- */}
-      {openAnnounce && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(8px)' }}>
-          <div style={{ background: 'white', padding: '40px', borderRadius: '30px', width: '100%', maxWidth: '400px', textAlign: 'center', borderTop: `12px solid ${announcement?.type === 'Urgent' ? '#EF4444' : '#800000'}` }}>
-            {announcement ? (
-              <>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>{announcement.type === 'Urgent' ? '🚨' : '📢'}</div>
-                <h2 style={{ margin: '0 0 5px 0', color: '#1E293B' }}>{announcement.title}</h2>
-                <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginBottom: '20px' }}>
-                  📅 {new Date(announcement.createdAt).toLocaleDateString('en-GB')} | 🕒 {new Date(announcement.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                </div>
-                <p style={{ color: '#475569', fontSize: '1.1rem', lineHeight: '1.6' }}>{announcement.message}</p>
-              </>
-            ) : (
-              <div style={{ padding: '20px' }}>
-                <div style={{ fontSize: '3rem' }}>💤</div>
-                <h2 style={{ color: '#94A3B8' }}>No Notifications</h2>
-                <p style={{ color: '#CBD5E1' }}>Check back later for canteen news.</p>
-              </div>
-            )}
-            <button onClick={() => setOpenAnnounce(false)} style={{ width: '100%', marginTop: '30px', padding: '15px', background: '#800000', color: 'white', borderRadius: '15px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Close Window</button>
-          </div>
-        </div>
-      )}
+    <SupportModal 
+      isOpen={showComplaint} 
+      onClose={() => { setShowComplaint(false); setEditingCompId(null); setCompForm({subject:'', message:''}); }}
+      complaints={myComplaints}
+      form={compForm}
+      setForm={setCompForm}
+      onSubmit={handleComplaintSubmit}
+      onEdit={(c) => { setCompForm(c); setEditingCompId(c._id); }}
+      onRevoke={deleteMyComplaint}
+      onFileChange={(e) => setSelectedFile(e.target.files[0])}
+      isEditing={!!editingCompId}
+    />
 
-      {/* --- COMPLAINT MODAL (RESTORED UI) --- */}
-      {showComplaint && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 7000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'white', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ color: '#800000', margin: 0 }}>🛠️ Support Center</h2>
-              <button onClick={() => { setShowComplaint(false); setEditingCompId(null); setCompForm({subject:'', message:''}); }} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
-            </div>
-            <div style={{ marginBottom: '25px' }}>
-              <h4 style={{ color: '#64748B', borderBottom: '1px solid #EEE' }}>My Previous Issues</h4>
-              {myComplaints.length > 0 ? myComplaints.map(c => (
-                <div key={c._id} style={{ background: '#F8FAFC', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94A3B8' }}>
-                    <span>{new Date(c.createdAt).toLocaleDateString('en-GB')} <span style={{ marginLeft: '8px', opacity: 0.7 }}>{new Date(c.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}</span></span>
-                    <span style={{ color: c.status === 'Pending' ? '#F59E0B' : '#16A34A', fontWeight: 'bold' }}>{c.status.toUpperCase()}</span>
-                  </div>
-                  <div style={{ fontWeight: 'bold', marginTop: '5px' }}>{c.subject}</div>
-                  <p style={{ fontSize: '0.85rem', margin: '5px 0', color: '#475569' }}>{c.message}</p>
-                  <div style={{ display: 'flex', gap: '15px', marginTop: '10px', borderTop: '1px solid #DDD', paddingTop: '8px' }}>
-                    <button onClick={() => { setCompForm(c); setEditingCompId(c._id); }} style={{ background: 'none', border: 'none', color: '#800000', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>✏️ Edit</button>
-                    <button onClick={() => deleteMyComplaint(c._id)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>🗑️ Revoke</button>
-                  </div>
-                </div>
-              )) : <p style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center' }}>No complaints raised yet.</p>}
-            </div>
-            <div style={{ background: '#FFFDF5', padding: '20px', borderRadius: '20px', border: '1px dashed #800000' }}>
-              <h4 style={{ margin: '0 0 15px 0' }}>{editingCompId ? "Edit Issue" : "Raise New Issue"}</h4>
-              <input placeholder="Subject" value={compForm.subject} onChange={e => setCompForm({...compForm, subject: e.target.value})} style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: '1px solid #DDD', boxSizing: 'border-box' }} />
-              <textarea placeholder="Message" value={compForm.message} onChange={e => setCompForm({...compForm, message: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #DDD', minHeight: '80px', boxSizing: 'border-box' }} />
-              <label style={{display:'block', marginBottom:'5px', fontSize:'0.8rem', fontWeight:'bold'}}>ATTACH PHOTO (OPTIONAL)</label>
-              <input type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files[0])} style={{marginBottom: '15px'}} />
-              <button onClick={handleComplaintSubmit} style={{ width: '100%', marginTop: '15px', padding: '15px', background: '#800000', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>{editingCompId ? 'Update Complaint' : 'Submit Complaint'}</button>
-            </div>
-          </div>
-        </div>
-      )}
+    <CartDrawer 
+      isOpen={showCart} 
+      onClose={() => { setShowCart(false); setCheckoutStep(1); }}
+      cart={cart}
+      updateQty={updateQty}
+      removeFromCart={removeFromCart}
+      checkoutStep={checkoutStep}
+      setCheckoutStep={setCheckoutStep}
+      userDetails={userDetails}
+      setUserDetails={setUserDetails}
+      onPlaceOrder={handlePlaceOrder}
+    />
 
-      {/* --- HISTORY MODAL --- */}
-      {/* --- ORDER SUMMARY / TOKEN MODAL --- */}
-{(viewHistory || orderSummary) && (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-    <div style={{ background: 'white', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}>
-      
-      {viewHistory ? (
-        /* --- HISTORY LIST VIEW --- */
-        <div>
-          <h2 style={{ textAlign: 'center', color: '#800000', marginBottom: '20px' }}>📜 Order History</h2>
-          {history.length > 0 ?history.map(h => (
-  <div 
-    key={h._id} 
-    onClick={() => { setOrderSummary(h); setViewHistory(false); }} 
-    style={{ 
-      padding: '15px', 
-      borderBottom: '1px solid #F1F5F9', 
-      cursor: 'pointer', 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center' 
-    }}
-  >
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <span style={{ fontWeight: 'bold', color: '#1E293B' }}>Token #{h.tokenNumber}</span>
-      <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{new Date(h.createdAt).toLocaleDateString()}</div>
-    </div>
-
-    {/* --- DYNAMIC STATUS BADGE --- */}
-    <div style={{ 
-  fontSize: '0.65rem', 
-  fontWeight: 'bold', 
-  padding: '4px 12px', 
-  borderRadius: '50px', 
-  // GREEN for Ready, RED for Cancelled, YELLOW for everything else (Preparing/Running)
-  background: h.status === 'Ready' ? '#DCFCE7' : (h.status === 'Cancelled' ? '#FEE2E2' : '#FEF3C7'),
-  color: h.status === 'Ready' ? '#166534' : (h.status === 'Cancelled' ? '#991B1B' : '#92400E'),
-  border: `1px solid ${h.status === 'Ready' ? '#BBF7D0' : (h.status === 'Cancelled' ? '#FECACA' : '#FDE68A')}`
-}}>
-  {(h.status || 'Preparing').toUpperCase()}
-</div>
-
-    <strong style={{ color: '#800000', fontSize: '1.1rem' }}>₹{h.totalAmount}</strong>
-  </div>
-)) : <p style={{ textAlign: 'center', color: '#94A3B8' }}>No past orders found.</p>}
-        </div>
-      ) : (
-        /* --- ACTUAL TOKEN RECEIPT --- */
-        <div id="printable-bill" style={{ fontFamily: "'Courier New', Courier, monospace", color: '#000' }}>
-          <h2 style={{ textAlign: 'center', margin: '0 0 5px 0', letterSpacing: '2px' }}>RKV CANTEEN</h2>
-          <p style={{ textAlign: 'center', fontSize: '0.8rem', margin: '0 0 15px 0' }}>OFFICIAL DIGITAL TOKEN</p>
-          
-          <div style={{ borderTop: '2px dashed #000', borderBottom: '2px dashed #000', padding: '10px 0', margin: '10px 0', fontSize: '0.9rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Date:</span> <span>{new Date(orderSummary.createdAt).toLocaleDateString('en-GB')}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Time:</span> <span>{new Date(orderSummary.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}><span>Customer:</span> <span style={{ fontWeight: 'bold' }}>{orderSummary.userName}</span></div>
-          </div>
-
-          <div style={{ margin: '15px 0' }}>
-            {orderSummary.items?.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '5px' }}>
-                <span>{item.name} x{item.quantity}</span>
-                <span>₹{item.price * item.quantity}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ borderTop: '1px solid #000', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.2rem' }}>
-            <span>TOTAL AMOUNT</span>
-            <span>₹{orderSummary.totalAmount}</span>
-          </div>
-
-          <div style={{ textAlign: 'center', margin: '25px 0', padding: '20px', background: '#F8FAFC', borderRadius: '20px' }}>
-            <h1 style={{ margin: '0 0 10px 0', fontSize: '3rem', color: '#800000' }}>#{orderSummary.tokenNumber}</h1>
-            <QRCodeCanvas value={orderSummary._id} size={180} includeMargin={true} level="H" />
-            <div style={{ marginTop: '15px', fontSize: '0.65rem', color: '#64748B', wordBreak: 'break-all' }}>
-              ORDER ID: {orderSummary._id}
-            </div>
-          </div>
-
-          <p style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94A3B8', fontStyle: 'italic' }}>
-            Please show this QR or Order ID at the counter to collect your food.
-          </p>
-        </div>
-      )}
-
-      <button 
-        onClick={() => {setOrderSummary(null); setViewHistory(false);}} 
-        style={{ width: '100%', padding: '15px', background: '#800000', color: 'white', borderRadius: '15px', border: 'none', marginTop: '20px', fontWeight: 'bold', cursor: 'pointer' }}
-      >
-        Close Receipt
-      </button>
-    </div>
-  </div>
-)}
+  <HistoryModal 
+    isOpen={viewHistory || !!orderSummary}
+    onClose={() => { setOrderSummary(null); setViewHistory(false); }}
+    viewHistory={viewHistory}
+    setViewHistory={setViewHistory}
+    history={history}
+    orderSummary={orderSummary}
+    setOrderSummary={setOrderSummary}
+  />
     </div>
   );
 };
