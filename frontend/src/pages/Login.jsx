@@ -14,19 +14,56 @@ const Login = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
+  // Inside Login.jsx useEffect
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        navigate('/menu', { replace: true });
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
   const isMobile = width < 768;
 
   const handleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      const email = result.user.email;
-      if (email.endsWith("@rguktrkv.ac.in") || email === "canteenStaffRgukt@gmail.com") {
-        email === "canteen.staff@rguktrkv.ac.in" ? navigate('/admin/dashboard') : navigate('/menu');
+      const user = result.user;
+      const email = user.email;
+
+      // 1. Check if the email is allowed (Student or Staff)
+      if (email.endsWith("@rguktrkv.ac.in") || email === "canteenstaffrgukt@gmail.com") {
+        
+        // 2. Prepare user object to store in LocalStorage (CRITICAL for session persistence)
+        const userData = {
+          uid: user.uid,
+          name: user.displayName,
+          email: user.email,
+          photo: user.photoURL,
+          isAdmin: email === "canteenstaffrgukt@gmail.com"
+        };
+
+        // 3. Save to localStorage so it survives page refreshes
+        localStorage.setItem('canteenUser', JSON.stringify(userData));
+
+        // 4. Redirect based on email
+        if (email === "canteenstaffrgukt@gmail.com") {
+          navigate('/admin/dashboard', {replace: true});
+        } else {
+          navigate('/menu', { replace: true });
+        }
+
       } else {
+        // Deny access for non-college emails
         await auth.signOut();
         alert("Access Denied! Use your @rguktrkv.ac.in ID.");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error("Login Error:", err); 
+      alert("Authentication failed. Please try again.");
+    }
   };
 
   const styles = {
@@ -60,7 +97,7 @@ const Login = () => {
     loginBtn: {
       width: '100%', padding: '16px', background: '#800000', color: 'white',
       border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem',
-      cursor: 'pointer'
+      cursor: 'pointer', transition: '0.3s'
     }
   };
 
@@ -71,7 +108,14 @@ const Login = () => {
         <div style={styles.logoCircle}>RKV</div>
         <h1 style={styles.title}>CampusCanteen</h1>
         <p style={styles.subtitle}>RGUKT Canteen | Login</p>
-        <button style={styles.loginBtn} onClick={handleLogin}>Sign in with College ID</button>
+        <button 
+          style={styles.loginBtn} 
+          onClick={handleLogin}
+          onMouseOver={(e) => e.target.style.background = '#600000'}
+          onMouseOut={(e) => e.target.style.background = '#800000'}
+        >
+          Sign in with College ID
+        </button>
         <p style={{ marginTop: '2.5rem', color: '#a0aec0', fontSize: '0.7rem', fontWeight: '600' }}>SECURE AUTHENTICATION</p>
       </div>
     </div>

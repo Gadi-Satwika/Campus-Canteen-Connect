@@ -85,6 +85,18 @@ const AdminLayout = () => {
               <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛒</span>
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Live Orders</span>
             </NavLink>
+
+            {/* NEW: ANNOUNCEMENTS LINK */}
+            <NavLink to="/admin/announcements" style={navItem}>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>📢</span>
+              <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Announcements</span>
+            </NavLink>
+
+            {/* NEW: COMPLAINTS LINK */}
+            <NavLink to="/admin/complaints" style={navItem}>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛠️</span>
+              <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Complaints</span>
+            </NavLink>
           </div>
 
           <div style={{ position: 'absolute', bottom: '30px', width: '100%', padding: '0 25px', opacity: isExpanded ? 1 : 0, transition: '0.2s' }}>
@@ -95,10 +107,10 @@ const AdminLayout = () => {
         {/* CONTENT AREA */}
         <main style={{ 
           flex: 1, 
-          marginLeft: '80px', // Matches collapsed sidebar width
+          marginLeft: '80px', 
           padding: '40px', 
           boxSizing: 'border-box',
-          transition: 'margin-left 0.4s ease' // Optional: move content when sidebar expands
+          transition: 'margin-left 0.4s ease' 
         }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <Outlet />

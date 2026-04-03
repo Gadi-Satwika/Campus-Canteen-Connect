@@ -7,6 +7,8 @@ import Dashboard from './pages/admin/Dashboard';
 import Inventory from './pages/admin/Inventory';
 import LiveOrders from './pages/admin/LiveOrders';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements';
+import AdminComplaints from './pages/admin/AdminComplaints'
 import './index.css';
 
 function App() {
@@ -23,10 +25,13 @@ function App() {
         
         <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
 
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="orders" element={<LiveOrders />} />
+          <Route path="announcements" element={<AdminAnnouncements />} />
+
+          <Route path="complaints" element={<AdminComplaints />} />
         </Route>
       </Routes>
     </Router>

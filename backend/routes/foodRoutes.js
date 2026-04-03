@@ -44,4 +44,46 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Edit item details
+// backend/routes/foodRoutes.js
+
+// EDIT: Update an existing food item
+// backend/routes/foodRoutes.js
+
+router.put('/edit/:id', async (req, res) => {
+    try {
+        const { name, price, category, image, quantity } = req.body;
+        
+        // FIXED: Changed 'Order' to 'FoodItem'
+        const updatedItem = await FoodItem.findByIdAndUpdate(
+            req.params.id, 
+            { 
+                name, 
+                price: Number(price), 
+                category, 
+                image, 
+                quantity: Number(quantity) 
+            }, 
+            { new: true } 
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        res.json(updatedItem);
+    } catch (err) {
+        console.error("Edit Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Toggle availability only
+router.put('/toggle/:id', async (req, res) => {
+    try {
+        const updated = await FoodItem.findByIdAndUpdate(req.params.id, { isAvailable: req.body.isAvailable }, { new: true });
+        res.json(updated);
+    } catch (err) { res.status(500).json(err); }
+});
+
 module.exports = router;
