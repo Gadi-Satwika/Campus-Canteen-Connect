@@ -9,6 +9,8 @@ import html2canvas from 'html2canvas';
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 
+import SpecialOrders from '../components/SpecialOrders';
+
 const Menu = () => {
   // --- STATE ---
   const [items, setItems] = useState([]);
@@ -125,6 +127,31 @@ const Menu = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Add this to sync your LocalStorage history with the Database status
+  useEffect(() => {
+    const syncHistoryStatus = async () => {
+      if (userDetails.email) {
+        try {
+          // Fetch fresh orders from DB to get the LATEST status
+          const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
+          
+          // Update the state so the "Badge" changes color immediately
+          setHistory(res.data);
+          
+          // Update LocalStorage so it's fresh for the next refresh
+          localStorage.setItem('orderHistory', JSON.stringify(res.data));
+        } catch (err) {
+          console.error("Status sync failed");
+        }
+      }
+    };
+
+    // Sync once on load, then every 20 seconds to catch Admin updates
+    syncHistoryStatus();
+    const interval = setInterval(syncHistoryStatus, 20000);
+    return () => clearInterval(interval);
+  }, [userDetails.email]);
+
   // --- ACTIONS ---
   const addToCart = (item) => {
     const exists = cart.find(i => i._id === item._id);
@@ -183,10 +210,7 @@ const Menu = () => {
       </nav>
 
       <div style={{ padding: '40px 20px', zIndex: 10, maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
-        <div style={{ background: 'white', border: '2px dashed #800000', padding: '40px', borderRadius: '30px', textAlign: 'center', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ margin: 0, color: '#800000', fontSize: '1.8rem' }}>✨ RKV Special Orders Section</h2>
-          <p style={{ color: '#64748B', fontSize: '1.1rem', marginTop: '10px' }}>Bulk pre-booking for Biryani & Event catering starts soon!</p>
-        </div>
+        <SpecialOrders />
 
         {!activeCategory ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
@@ -338,15 +362,41 @@ const Menu = () => {
         /* --- HISTORY LIST VIEW --- */
         <div>
           <h2 style={{ textAlign: 'center', color: '#800000', marginBottom: '20px' }}>📜 Order History</h2>
-          {history.length > 0 ? history.map(h => (
-            <div key={h._id} onClick={() => { setOrderSummary(h); setViewHistory(false); }} style={{ padding: '15px', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontWeight: 'bold', color: '#1E293B' }}>Token #{h.tokenNumber}</span>
-                <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{new Date(h.createdAt).toLocaleDateString()}</div>
-              </div>
-              <strong style={{ color: '#800000' }}>₹{h.totalAmount}</strong>
-            </div>
-          )) : <p style={{ textAlign: 'center', color: '#94A3B8' }}>No past orders found.</p>}
+          {history.length > 0 ?history.map(h => (
+  <div 
+    key={h._id} 
+    onClick={() => { setOrderSummary(h); setViewHistory(false); }} 
+    style={{ 
+      padding: '15px', 
+      borderBottom: '1px solid #F1F5F9', 
+      cursor: 'pointer', 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center' 
+    }}
+  >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <span style={{ fontWeight: 'bold', color: '#1E293B' }}>Token #{h.tokenNumber}</span>
+      <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{new Date(h.createdAt).toLocaleDateString()}</div>
+    </div>
+
+    {/* --- DYNAMIC STATUS BADGE --- */}
+    <div style={{ 
+  fontSize: '0.65rem', 
+  fontWeight: 'bold', 
+  padding: '4px 12px', 
+  borderRadius: '50px', 
+  // GREEN for Ready, RED for Cancelled, YELLOW for everything else (Preparing/Running)
+  background: h.status === 'Ready' ? '#DCFCE7' : (h.status === 'Cancelled' ? '#FEE2E2' : '#FEF3C7'),
+  color: h.status === 'Ready' ? '#166534' : (h.status === 'Cancelled' ? '#991B1B' : '#92400E'),
+  border: `1px solid ${h.status === 'Ready' ? '#BBF7D0' : (h.status === 'Cancelled' ? '#FECACA' : '#FDE68A')}`
+}}>
+  {(h.status || 'Preparing').toUpperCase()}
+</div>
+
+    <strong style={{ color: '#800000', fontSize: '1.1rem' }}>₹{h.totalAmount}</strong>
+  </div>
+)) : <p style={{ textAlign: 'center', color: '#94A3B8' }}>No past orders found.</p>}
         </div>
       ) : (
         /* --- ACTUAL TOKEN RECEIPT --- */
