@@ -4,13 +4,22 @@ import { QRCodeCanvas } from 'qrcode.react';
 const HistoryModal = ({ isOpen, onClose, viewHistory, setViewHistory, history, orderSummary, setOrderSummary }) => {
   if (!isOpen) return null;
 
-  const getStatusLabel = (status) => {
-    const s = status ? status.toLowerCase() : 'preparing';
-    if (s === 'collected' || s === 'delivered' || s === 'done') return { text: 'DELIVERED', color: '#1E40AF', bg: '#DBEAFE' };
-    if (s === 'ready') return { text: 'READY', color: '#166534', bg: '#DCFCE7' };
-    if (s === 'deleted' || s === 'cancelled') return { text: 'CANCELLED', color: '#991B1B', bg: '#FEE2E2' };
-    return { text: 'PREPARING', color: '#92400E', bg: '#FEF3C7' };
-  };
+const getStatusLabel = (status) => {
+  // Normalize safely
+  const s = status ? String(status).toLowerCase() : 'preparing';
+
+  if (s === 'ready') {
+    return { text: 'READY', color: '#166534', bg: '#DCFCE7' };
+  }
+  if (s === 'collected' || s === 'delivered' || s === 'done') {
+    return { text: 'DELIVERED', color: '#1E40AF', bg: '#DBEAFE' };
+  }
+  if (s === 'deleted' || s === 'cancelled') {
+    return { text: 'CANCELLED', color: '#991B1B', bg: '#FEE2E2' };
+  }
+  
+  return { text: 'PREPARING', color: '#92400E', bg: '#FEF3C7' };
+};
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>

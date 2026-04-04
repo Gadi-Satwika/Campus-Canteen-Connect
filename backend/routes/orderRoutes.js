@@ -6,13 +6,15 @@ const transporter = require('../config/mailer');
 // --- NEW: GET ORDERS FOR SPECIFIC USER (This was missing!) ---
 router.get('/user/:email', async (req, res) => {
     try {
+        // This finds EVERY order matching the email, no matter the date
         const orders = await Order.find({ userEmail: req.params.email }).sort({ createdAt: -1 });
+        
+        console.log(`Found ${orders.length} orders for ${req.params.email}`);
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-
 // 1. GET CURRENT SERVING
 router.get('/current-serving', async (req, res) => {
     try {
@@ -56,10 +58,29 @@ router.get('/all', async (req, res) => {
 // 4. UPDATE STATUS & SEND EMAIL
 router.put('/status/:id', async (req, res) => {
   try {
-    const { status } = req.body;
-    const updated = await Order.findByIdAndUpdate(req.params.id, { status: status }, { new: true });
-    res.status(200).json(updated);
-  } catch (err) { res.status(500).send(err); }
+    const { status, reason } = req.body;
+    // 1. Update the Database
+    const updatedOrder = await Order.findByIdAndUpdate(
+      req.params.id, 
+      { status: status }, 
+      { new: true } 
+    );
+
+    // 2. If it's a deletion, send the email
+    if (status === 'Deleted' && reason) {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: updatedOrder.userEmail,
+            subject: `❌ Order Cancelled - Token #${updatedOrder.tokenNumber}`,
+            html: `<p>Your order was cancelled. <b>Reason:</b> ${reason}</p>`
+        };
+        await transporter.sendMail(mailOptions);
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post('/send-cancellation-email', async (req, res) => {

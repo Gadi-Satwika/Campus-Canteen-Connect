@@ -9,7 +9,7 @@ const OrderSchema = new mongoose.Schema({
     paymentMethod: String,
     otp: String,
     tokenNumber: { type: Number }, // <-- CRITICAL: This must exist
-    status: { type: String, default: 'Preparing' }
+    status: { type: String, default: 'Pending' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', OrderSchema);

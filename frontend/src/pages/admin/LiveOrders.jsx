@@ -19,32 +19,32 @@ const LiveOrders = () => {
   };
 
 
- const handleDelete = async (orderId, userEmail) => {
-  const reason = window.prompt("Reason for cancellation (will be emailed to student):");
-  if (!reason) return;
+  const handleDelete = async (orderId, userEmail) => {
+    const reason = window.prompt("Reason for cancellation (will be emailed to student):");
+    if (!reason) return;
 
-  try {
-    // 1. UPDATE STATUS TO DELETED
-    await axios.put(`http://localhost:5000/api/orders/status/${orderId}`, { 
-      status: 'Deleted',
-      reason: reason 
-    });
+    try {
+      // 1. UPDATE STATUS TO DELETED
+      await axios.put(`http://localhost:5000/api/orders/status/${orderId}`, { 
+        status: 'Deleted',
+        reason: reason 
+      });
 
-    // 2. TRIGGER EMAIL
-    await axios.post(`http://localhost:5000/api/orders/send-cancellation-email`, {
-      email: userEmail,
-      reason: reason,
-      orderId: orderId
-    });
+      // 2. TRIGGER EMAIL
+      await axios.post(`http://localhost:5000/api/orders/send-cancellation-email`, {
+        email: userEmail,
+        reason: reason,
+        orderId: orderId
+      });
 
-    alert("✅ Order Cancelled and Email Sent!");
-    fetchOrders(); // Refresh the list to remove the card
-  } catch (err) {
-    console.error(err);
-    alert("❌ Error: Order status updated but email might have failed.");
-    fetchOrders(); 
-  }
-};
+      alert("✅ Order Cancelled and Email Sent!");
+      fetchOrders(); // Refresh the list to remove the card
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error: Order status updated but email might have failed.");
+      fetchOrders(); 
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -84,7 +84,7 @@ const LiveOrders = () => {
   // inside Admin LiveOrders.jsx
 
 const handleDeleteOrder = async (id) => {
-    const reason = window.prompt("Enter reason for cancellation (sent to student email):");
+  const reason = window.prompt("Enter reason for cancellation (sent to student email):");
     if (reason) {
         try {
             await axios.put(`http://localhost:5000/api/orders/status/${id}`, { 
@@ -95,12 +95,12 @@ const handleDeleteOrder = async (id) => {
             fetchOrders(); // Refresh the list
         } catch (err) { alert("Action failed."); }
     }
-};
+  };
 
-// In your JSX button:
-<button onClick={() => handleDeleteOrder(order._id)} style={{ color: 'red' }}>
-  🗑️ Cancel Order
-</button>
+  // In your JSX button:
+  <button onClick={() => handleDeleteOrder(order._id)} style={{ color: 'red' }}>
+    🗑️ Cancel Order
+  </button>
 
   const fetchManual = async () => {
     const id = document.getElementById('manualInput').value;
@@ -114,28 +114,29 @@ const handleDeleteOrder = async (id) => {
 
   // 4. DATA GROUPING (Live vs 10-Day History)
   // 4. DATA GROUPING (Live vs 10-Day History)
-const todayStr = new Date().toDateString();
+  const todayStr = new Date().toDateString();
 
-const liveStream = allOrders.filter(o => 
-  new Date(o.createdAt).toDateString() === todayStr && 
-  o.status !== 'Collected' && 
-  o.status !== 'Deleted' // FIX: Hide deleted orders from the live feed
-);
+  const liveStream = allOrders.filter(o => 
+    new Date(o.createdAt).toDateString() === todayStr && 
+    o.status !== 'Collected' && 
+    o.status !== 'Deleted' // This hides the card from Admin Feed immediately
+  );
 
-const filteredLive = liveStream.filter(o => 
-  o.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-  String(o.tokenNumber).includes(searchTerm)
-);
+  const filteredLive = liveStream.filter(o => 
+    o.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    String(o.tokenNumber).includes(searchTerm)
+  );
 
   // Group history by date for the last 10 days
-  const groupedHistory = allOrders
-    .filter(o => o.status === 'Collected')
-    .reduce((groups, order) => {
-      const date = new Date(order.createdAt).toDateString();
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(order);
-      return groups;
-    }, {});
+  // Inside LiveOrders.jsx
+const groupedHistory = allOrders
+  .filter(o => o.status === 'Collected' || o.status === 'Deleted') // Include both!
+  .reduce((groups, order) => {
+    const date = new Date(order.createdAt).toDateString();
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(order);
+    return groups;
+  }, {});
 
   // In Admin's LiveOrders.jsx or similar
   const markAsReady = async (orderId) => {
@@ -164,33 +165,33 @@ const filteredLive = liveStream.filter(o =>
         /* --- LIVE FEED SECTION --- */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {filteredLive.length > 0 ? filteredLive.map(order => (
-  <div key={order._id} style={{ background: 'white', padding: '20px', borderRadius: '25px', border: `2px solid ${order.status === 'Ready' ? '#16A34A' : '#E2E8F0'}`, boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <h2 style={{ margin: 0, color: '#800000' }}>#{order.tokenNumber}</h2>
-      {/* FIX: Passing both ID and Email to the function */}
-      <button onClick={() => handleDelete(order._id, order.userEmail)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🗑️</button>
-    </div>
-    <p style={{ fontWeight: 'bold', margin: '10px 0' }}>{order.userName}</p>
-    
-    <div style={{ background: '#F8FAFC', padding: '10px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '15px' }}>
-      {order.items.map((it, idx) => <div key={idx}>{it.name} x{it.quantity}</div>)}
-    </div>
+            <div key={order._id} style={{ background: 'white', padding: '20px', borderRadius: '25px', border: `2px solid ${order.status === 'Ready' ? '#16A34A' : '#E2E8F0'}`, boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <h2 style={{ margin: 0, color: '#800000' }}>#{order.tokenNumber}</h2>
+                {/* FIX: Passing both ID and Email to the function */}
+                <button onClick={() => handleDelete(order._id, order.userEmail)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🗑️</button>
+              </div>
+              <p style={{ fontWeight: 'bold', margin: '10px 0' }}>{order.userName}</p>
+              
+              <div style={{ background: '#F8FAFC', padding: '10px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '15px' }}>
+                {order.items.map((it, idx) => <div key={idx}>{it.name} x{it.quantity}</div>)}
+              </div>
 
-    {/* EXPLICIT STATUS CHECK */}
-    {order.status === 'Ready' ? (
-      <div style={{ textAlign: 'center', color: '#16A34A', fontWeight: 'bold', padding: '12px', border: '1px solid #16A34A', borderRadius: '12px' }}>
-        WAITING FOR SCAN...
-      </div>
-    ) : (
-      <button 
-        onClick={() => handleStatusUpdate(order._id, 'Ready')} 
-        style={{ width: '100%', padding: '12px', background: '#F59E0B', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
-      >
-        Mark Ready 🔔
-      </button>
-    )}
-  </div>
-)) : (
+              {/* EXPLICIT STATUS CHECK */}
+              {order.status === 'Ready' ? (
+                <div style={{ textAlign: 'center', color: '#16A34A', fontWeight: 'bold', padding: '12px', border: '1px solid #16A34A', borderRadius: '12px' }}>
+                  WAITING FOR SCAN...
+                </div>
+              ) : (
+                <button 
+                  onClick={() => handleStatusUpdate(order._id, 'Ready')} 
+                  style={{ width: '100%', padding: '12px', background: '#F59E0B', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  Mark Ready 🔔
+                </button>
+              )}
+            </div>
+          )) : (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px' }}>
               <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" style={{ width: '120px', opacity: 0.2 }} alt="" />
               <h3 style={{ color: '#94A3B8' }}>No active orders for now.</h3>
@@ -199,26 +200,41 @@ const filteredLive = liveStream.filter(o =>
         </div>
       ) : (
         /* --- 10-DAY HISTORY SECTION --- */
-        <div>
-          {Object.keys(groupedHistory).length > 0 ? Object.keys(groupedHistory).slice(0, 10).map(date => (
-            <div key={date} style={{ marginBottom: '30px' }}>
-              <h3 style={{ color: '#800000', borderBottom: '2px solid #EEE', paddingBottom: '10px' }}>{date === todayStr ? "Today's History" : date}</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px', marginTop: '15px' }}>
-                {groupedHistory[date].map(h => (
-                  <div key={h._id} style={{ background: 'white', padding: '15px', borderRadius: '15px', opacity: 0.8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>Token #{h.tokenNumber}</strong>
-                      <span>₹{h.totalAmount}</span>
-                    </div>
-                    <small style={{ color: '#94A3B8' }}>{h.userName}</small>
-                  </div>
-                ))}
-              </div>
+        /* --- 10-DAY HISTORY SECTION --- */
+<div>
+  {Object.keys(groupedHistory).length > 0 ? Object.keys(groupedHistory).slice(0, 10).map(date => (
+    <div key={date} style={{ marginBottom: '30px' }}>
+      <h3 style={{ color: '#800000', borderBottom: '2px solid #EEE', paddingBottom: '10px' }}>{date}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', marginTop: '15px' }}>
+        {groupedHistory[date].map(h => (
+          <div key={h._id} style={{ background: 'white', padding: '15px', borderRadius: '15px', border: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong>Token #{h.tokenNumber}</strong>
+              
+              {/* STATUS BADGE FOR ADMIN HISTORY */}
+              <span style={{ 
+                fontSize: '0.6rem', 
+                padding: '4px 8px', 
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                background: h.status === 'Deleted' ? '#FEE2E2' : '#DBEAFE',
+                color: h.status === 'Deleted' ? '#991B1B' : '#1E40AF'
+              }}>
+                {h.status === 'Deleted' ? 'CANCELLED' : 'COLLECTED'}
+              </span>
             </div>
-          )) : (
-            <div style={{ textAlign: 'center', padding: '100px' }}><h3>No history records found.</h3></div>
-          )}
-        </div>
+            <div style={{ marginTop: '5px' }}>
+              <small style={{ color: '#64748B', display: 'block' }}>{h.userName}</small>
+              <strong style={{ color: '#800000' }}>₹{h.totalAmount}</strong>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )) : (
+    <div style={{ textAlign: 'center', padding: '100px' }}><h3>No history records found.</h3></div>
+  )}
+</div>
       )}
 
       {/* --- FLOATING SCANNER ICON (PhonePe Style) --- */}

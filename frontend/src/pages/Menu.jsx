@@ -140,59 +140,75 @@ const Menu = () => {
   const removeFromCart = (id) => setCart(cart.filter(item => item._id !== id));
 
   // 1. Unified Sync Function
+  // REPLACE all your other syncHistory/useEffect hooks with this ONE block
+// Inside Menu.jsx
 const syncHistory = async () => {
-  if (!userDetails.email) return;
+  // DEBUG: If you see "EMAIL IS EMPTY" in F12 console, this is the bug!
+  if (!userDetails.email) {
+    console.log("CANNOT SYNC: EMAIL IS EMPTY");
+    return;
+  }
+
   try {
     const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
-    console.log("SYNC DATA FROM DB:", res.data); // <-- CHECK THIS IN CONSOLE
+    console.log("DATABASE RESPONDED WITH:", res.data);
     
     if (res.data && Array.isArray(res.data)) {
-      // Sort: Newest orders first
-      const sorted = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setHistory(sorted);
-      // Update local storage so it stays fresh
-      localStorage.setItem('orderHistory', JSON.stringify(sorted));
+      setHistory(res.data);
+      // This puts the REAL database data (Collected/Pending) back into storage
+      localStorage.setItem('orderHistory', JSON.stringify(res.data));
     }
   } catch (err) {
-    console.error("DATABASE SYNC FAILED:", err);
+    console.error("FETCH FAILED:", err);
   }
 };
+
+// Ensure this runs whenever the userDetails (email) changes
+useEffect(() => {
+  syncHistory();
+}, [userDetails.email]);
+
+// Add this near your other useEffects
+useEffect(() => {
+  // If you use Firebase auth, get the email like this:
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (user) {
+      setUserDetails(prev => ({ ...prev, email: user.email, name: user.displayName || prev.name }));
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
 // 2. The Place Order Fix
-const handlePlaceOrder = async () => {
-  if (!userDetails.name || !userDetails.email || !userDetails.dorm) return alert("Fill all details!");
-  
-  const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-  const orderPayload = { 
-    items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })), 
-    totalAmount: total, 
-    userName: userDetails.name, 
-    userEmail: userDetails.email, // Ensure this matches Admin handleDelete
-    dorm: userDetails.dorm, 
-    paymentMethod: userDetails.method 
+  const handlePlaceOrder = async () => {
+    if (!userDetails.name || !userDetails.email || !userDetails.dorm) return alert("Fill all details!");
+    
+    const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const orderPayload = { 
+      items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })), 
+      totalAmount: total, 
+      userName: userDetails.name, 
+      userEmail: userDetails.email, // Ensure this matches Admin handleDelete
+      dorm: userDetails.dorm, 
+      paymentMethod: userDetails.method 
+    };
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
+      // Add the new order to the top of history immediately
+      setHistory(prev => [res.data, ...prev]);
+      setOrderSummary(res.data);
+      setCart([]);
+      setShowCart(false);
+      setCheckoutStep(1);
+      // Force a sync to make sure everything is aligned
+      syncHistory();
+    } catch (err) {
+      alert("Order Failed!");
+    }
   };
 
-  try {
-    const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
-    // Add the new order to the top of history immediately
-    setHistory(prev => [res.data, ...prev]);
-    setOrderSummary(res.data);
-    setCart([]);
-    setShowCart(false);
-    setCheckoutStep(1);
-    // Force a sync to make sure everything is aligned
-    syncHistory();
-  } catch (err) {
-    alert("Order Failed!");
-  }
-};
-
 // Unified Polling Effect
-useEffect(() => {
-  syncHistory(); // Initial load
-  const interval = setInterval(syncHistory, 7000); // Poll every 7s
-  return () => clearInterval(interval);
-}, [userDetails.email]);
 
   const particlesInit = async (engine) => { await loadSlim(engine); };
 
