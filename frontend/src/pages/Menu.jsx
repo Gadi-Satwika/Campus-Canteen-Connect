@@ -95,6 +95,33 @@ const Menu = () => {
     }
   };
 
+  const checkFoodStatus = (item) => {
+      const hour = new Date().getHours();
+      
+      // 1. Admin Manual Kill-Switch (from your FoodItem.js schema)
+      if (item.isAvailable === false) return { canOrder: false, reason: "Sold Out" };
+
+      // 2. Admin Force Override
+      if (item.availabilityMode === 'Force Available') return { canOrder: true, reason: "" };
+
+      // 3. Automated Time Logic
+      const timings = {
+          'Breakfast': { start: 7, end: 11 },
+          'Lunch':     { start: 12, end: 15 },
+          'Snacks':    { start: 16, end: 22 } // Adjusted to 10 PM for snacks
+      };
+
+      const window = timings[item.category];
+      if (window) {
+          if (hour >= window.start && hour < window.end) {
+              return { canOrder: true, reason: "" };
+          } else {
+              return { canOrder: false, reason: `Starts at ${window.start}:00` };
+          }
+      }
+      return { canOrder: true, reason: "" };
+  };
+
   // --- ANNOUNCEMENT SYNC (FIXED LOGIC) ---
   useEffect(() => {
     const fetchLatest = async () => {
@@ -140,44 +167,42 @@ const Menu = () => {
   const removeFromCart = (id) => setCart(cart.filter(item => item._id !== id));
 
   // 1. Unified Sync Function
-  // REPLACE all your other syncHistory/useEffect hooks with this ONE block
-// Inside Menu.jsx
-const syncHistory = async () => {
-  // DEBUG: If you see "EMAIL IS EMPTY" in F12 console, this is the bug!
-  if (!userDetails.email) {
-    console.log("CANNOT SYNC: EMAIL IS EMPTY");
-    return;
-  }
-
-  try {
-    const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
-    console.log("DATABASE RESPONDED WITH:", res.data);
-    
-    if (res.data && Array.isArray(res.data)) {
-      setHistory(res.data);
-      // This puts the REAL database data (Collected/Pending) back into storage
-      localStorage.setItem('orderHistory', JSON.stringify(res.data));
+  const syncHistory = async () => {
+    // DEBUG: If you see "EMAIL IS EMPTY" in F12 console, this is the bug!
+    if (!userDetails.email) {
+      console.log("CANNOT SYNC: EMAIL IS EMPTY");
+      return;
     }
-  } catch (err) {
-    console.error("FETCH FAILED:", err);
-  }
-};
 
-// Ensure this runs whenever the userDetails (email) changes
-useEffect(() => {
-  syncHistory();
-}, [userDetails.email]);
-
-// Add this near your other useEffects
-useEffect(() => {
-  // If you use Firebase auth, get the email like this:
-  const unsubscribe = auth.onAuthStateChanged((user) => {
-    if (user) {
-      setUserDetails(prev => ({ ...prev, email: user.email, name: user.displayName || prev.name }));
+    try {
+      const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
+      console.log("DATABASE RESPONDED WITH:", res.data);
+      
+      if (res.data && Array.isArray(res.data)) {
+        setHistory(res.data);
+        // This puts the REAL database data (Collected/Pending) back into storage
+        localStorage.setItem('orderHistory', JSON.stringify(res.data));
+      }
+    } catch (err) {
+      console.error("FETCH FAILED:", err);
     }
-  });
-  return () => unsubscribe();
-}, []);
+  };
+
+  // Ensure this runs whenever the userDetails (email) changes
+  useEffect(() => {
+    syncHistory();
+  }, [userDetails.email]);
+
+  // Add this near your other useEffects
+  useEffect(() => {
+    // If you use Firebase auth, get the email like this:
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserDetails(prev => ({ ...prev, email: user.email, name: user.displayName || prev.name }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
 // 2. The Place Order Fix
   const handlePlaceOrder = async () => {
@@ -248,14 +273,15 @@ useEffect(() => {
         </div>
       </nav>
 
-      <div style={{ padding: '40px 20px', zIndex: 10, maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+      <div style={{ padding: '20px', zIndex: 10, maxWidth: '1100px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
         <SpecialOrders />
 
         {!activeCategory ? (
+          /* --- CATEGORY SELECTION VIEW --- */
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
             {[ { id: 'Breakfast', icon: '☕', img: 'https://t3.ftcdn.net/jpg/00/78/87/94/360_F_78879462_KyMC4iWhDHLlEEZDAOLiDWPuubnAaMMk.jpg' }, 
-               { id: 'Lunch', icon: '🍚', img: 'https://i0.wp.com/www.chitrasfoodbook.com/wp-content/uploads/2015/06/south-indian-lunch-menu-1.jpg?w=1200&ssl=1' }, 
-               { id: 'Snacks', icon: '🍿', img: 'https://media.istockphoto.com/id/1263686908/photo/mixed-salty-snack-flat-lay-table-scene-on-a-wood-background.jpg?s=612x612&w=0&k=20&c=rCZ-gpvz--NpeNA0cYGCyJj3EK0kFUSkvdsow9u4I3o=' } 
+              { id: 'Lunch', icon: '🍚', img: 'https://i0.wp.com/www.chitrasfoodbook.com/wp-content/uploads/2015/06/south-indian-lunch-menu-1.jpg?w=1200&ssl=1' }, 
+              { id: 'Snacks', icon: '🍿', img: 'https://media.istockphoto.com/id/1263686908/photo/mixed-salty-snack-flat-lay-table-scene-on-a-wood-background.jpg?s=612x612&w=0&k=20&c=rCZ-gpvz--NpeNA0cYGCyJj3EK0kFUSkvdsow9u4I3o=' } 
             ].map(cat => (
               <div key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{ background: 'white', borderRadius: '30px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', boxShadow: '0 15px 35px rgba(0,0,0,0.1)', overflow: 'hidden', border: '1px solid #EEE' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}>
                 <img src={cat.img} style={{ width: '100%', height: '150px', objectFit: 'cover' }} alt={cat.id} />
@@ -264,21 +290,60 @@ useEffect(() => {
             ))}
           </div>
         ) : (
+          /* --- FILTERED ITEMS VIEW --- */
           <div>
             <button onClick={() => setActiveCategory(null)} style={{ background: '#800000', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '12px', cursor: 'pointer', marginBottom: '30px', fontWeight: 'bold' }}>⬅ Back to Categories</button>
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '30px' }}>
-              {items.filter(i => i.category === activeCategory).map(item => (
-                <div key={item._id} style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-                  <img src={item.image || 'https://via.placeholder.com/300x200?text=No+Image'} style={{ width: '100%', height: '200px', objectFit: 'cover' }} alt="" />
-                  <div style={{ padding: '20px' }}>
-                    <h3 style={{ margin: '0 0 15px 0' }}>{item.name}</h3>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#800000', fontWeight: '900', fontSize: '1.6rem' }}>₹{item.price}</span>
-                      <button onClick={() => addToCart(item)} style={{ background: '#800000', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>Add +</button>
+              {items.filter(i => i.category === activeCategory).map(item => {
+                // 1. RUN THE AVAILABILITY CHECK FOR EACH ITEM
+                const { canOrder, reason } = checkFoodStatus(item);
+
+                return (
+                  <div key={item._id} style={{ 
+                    background: 'white', 
+                    borderRadius: '25px', 
+                    overflow: 'hidden', 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                    position: 'relative', // CRITICAL: This anchors the "Locked" badge to the card
+                    opacity: canOrder ? 1 : 0.6,
+                    filter: canOrder ? 'none' : 'grayscale(1)'
+                  }}>
+                    {/* 2. THE FLOATING BADGE (Only shows when locked) */}
+                    {!canOrder && (
+                      <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#800000', color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 5, boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
+                        {reason}
+                      </div>
+                    )}
+
+                    <img src={item.image || 'https://via.placeholder.com/300x200?text=No+Image'} style={{ width: '100%', height: '200px', objectFit: 'cover' }} alt="" />
+                    
+                    <div style={{ padding: '20px' }}>
+                      <h3 style={{ margin: '0 0 15px 0', fontSize: '1.2rem' }}>{item.name}</h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#800000', fontWeight: '900', fontSize: '1.6rem' }}>₹{item.price}</span>
+                        
+                        {/* 3. THE SMART BUTTON */}
+                        <button 
+                          disabled={!canOrder}
+                          onClick={() => addToCart(item)} 
+                          style={{ 
+                            background: canOrder ? '#800000' : '#94A3B8', 
+                            color: 'white', 
+                            border: 'none', 
+                            padding: '12px 25px', 
+                            borderRadius: '15px', 
+                            fontWeight: 'bold', 
+                            cursor: canOrder ? 'pointer' : 'not-allowed' 
+                          }}
+                        >
+                          {canOrder ? 'Add +' : 'Locked'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

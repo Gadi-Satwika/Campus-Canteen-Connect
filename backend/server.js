@@ -8,7 +8,9 @@ const path = require('path');
 const announcementRoutes = require('./routes/announcementRoutes');
 
 const complaintRoutes = require('./routes/complaintRoutes');
-// const complaintRoutes = require('./routes/complaintRoutes');
+
+const specialRoutes = require('./routes/specialRoutes'); 
+
 require('dotenv').config();
 
 const app = express();
@@ -29,6 +31,8 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/announcements', announcementRoutes);
 
 app.use('/api/complaints', complaintRoutes);
+
+app.use('/api/specials', specialRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 //app.use('/api/complaints', complaintRoutes);

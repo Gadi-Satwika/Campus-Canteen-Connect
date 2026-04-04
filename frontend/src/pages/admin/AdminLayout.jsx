@@ -97,6 +97,11 @@ const AdminLayout = () => {
               <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛠️</span>
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Complaints</span>
             </NavLink>
+
+            <NavLink to="/admin/specials" style={navItem}>
+              <span style={{ marginRight: '10px' }}>🎨</span>
+              Banner Manager
+            </NavLink>
           </div>
 
           <div style={{ position: 'absolute', bottom: '30px', width: '100%', padding: '0 25px', opacity: isExpanded ? 1 : 0, transition: '0.2s' }}>

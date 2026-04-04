@@ -8,7 +8,8 @@ import Inventory from './pages/admin/Inventory';
 import LiveOrders from './pages/admin/LiveOrders';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
-import AdminComplaints from './pages/admin/AdminComplaints'
+import AdminComplaints from './pages/admin/AdminComplaints';
+import SpecialManager from './pages/admin/SpecialManager';
 import './index.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="announcements" element={<AdminAnnouncements />} />
 
           <Route path="complaints" element={<AdminComplaints />} />
+          <Route path="specials" element={<SpecialManager />} />
         </Route>
       </Routes>
     </Router>
