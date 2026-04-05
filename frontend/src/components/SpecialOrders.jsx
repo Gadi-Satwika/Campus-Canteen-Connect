@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const SpecialOrders = () => {
+const SpecialOrders = ({ addToCart }) => {
     const [dbSpecials, setDbSpecials] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -123,16 +123,40 @@ const SpecialOrders = () => {
                             <div style={{ textAlign: 'center', padding: '20px' }}>Loading deals...</div>
                         ) : dbSpecials.length > 0 ? (
                             <div style={{ display: 'grid', gap: '15px' }}>
-                                {dbSpecials.map(s => (
-                                    <div key={s._id} style={{ display: 'flex', gap: '15px', background: '#F8FAFC', padding: '15px', borderRadius: '20px', border: '1px solid #E2E8F0' }}>
-                                        <img src={s.image} style={{ width: '70px', height: '70px', borderRadius: '12px', objectFit: 'cover' }} alt="" />
-                                        <div style={{ flex: 1 }}>
-                                            <h4 style={{ margin: 0, color: '#1E293B', fontSize: '1rem' }}>{s.title}</h4>
-                                            <p style={{ margin: '3px 0', fontSize: '0.75rem', color: '#64748B' }}>{s.subtitle}</p>
-                                            {s.code && <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#DBEAFE', color: '#1E40AF', padding: '3px 8px', borderRadius: '6px' }}>CODE: {s.code}</span>}
-                                        </div>
-                                    </div>
-                                ))}
+                                {dbSpecials.map(s => {
+            const isOut = s.quantity <= 0;
+            return (
+                <div key={s._id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: isOut ? '#F1F5F9' : '#FFF7ED', borderRadius: '20px', opacity: isOut ? 0.6 : 1 }}>
+                    <img src={s.image} style={{ width: '70px', height: '70px', borderRadius: '15px', objectFit: 'cover' }} />
+                    <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0 }}>{s.title}</h4>
+                        <div style={{ color: '#800000', fontWeight: 'bold' }}>₹{s.price}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B' }}>Only {s.quantity} left!</div>
+                    </div>
+
+                    <button 
+                        disabled={isOut}
+                        onClick={() => {
+                            addToCart({
+                                _id: s._id,
+                                name: s.title,
+                                price: s.price,
+                                image: s.image,
+                                isSpecial: true // Flag for Admin
+                            });
+                            alert(`${s.title} added to cart!`);
+                        }}
+                        style={{ 
+                            background: isOut ? '#94A3B8' : '#800000', 
+                            color: 'white', border: 'none', padding: '10px 15px', 
+                            borderRadius: '10px', fontWeight: 'bold', cursor: isOut ? 'not-allowed' : 'pointer' 
+                        }}
+                    >
+                        {isOut ? 'Sold Out' : 'Add +'}
+                    </button>
+                </div>
+            );
+        })}
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', padding: '40px 0' }}>

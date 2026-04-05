@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const SpecialManager = () => {
     const [banners, setBanners] = useState([]);
-    const [form, setForm] = useState({ title: '', subtitle: '', image: '', code: '' });
+    const [form, setForm] = useState({ title: '', subtitle: '', image: '', code: '',price: '', quantity: '' });
 
     const fetchBanners = async () => {
         const res = await axios.get('http://localhost:5000/api/specials/all');
@@ -14,11 +14,17 @@ const SpecialManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await axios.post('http://localhost:5000/api/specials/add', form);
-        setForm({ title: '', subtitle: '', image: '', code: '' });
-        fetchBanners();
+        try {
+            await axios.post('http://localhost:5000/api/specials/add', {
+                ...form,
+                price: Number(form.price),
+                quantity: Number(form.quantity)
+            });
+            setForm({ title: '', subtitle: '', image: '', code: '', price: '', quantity: '' });
+            fetchBanners();
+            alert("Flash Special Live! 🔥");
+        } catch (err) { alert("Error adding special"); }
     };
-
     const handleDelete = async (id) => {
         if(window.confirm("Delete this banner?")) {
             await axios.delete(`http://localhost:5000/api/specials/${id}`);
@@ -37,6 +43,22 @@ const SpecialManager = () => {
                     <input placeholder="Subtitle" value={form.subtitle} onChange={e => setForm({...form, subtitle: e.target.value})} style={inputStyle} />
                     <input placeholder="Image URL" value={form.image} onChange={e => setForm({...form, image: e.target.value})} style={inputStyle} required />
                     <input placeholder="Promo Code" value={form.code} onChange={e => setForm({...form, code: e.target.value})} style={inputStyle} />
+                    <input 
+                        type="number" 
+                        placeholder="Price (₹)" 
+                        value={form.price} 
+                        onChange={e => setForm({...form, price: e.target.value})} 
+                        style={inputStyle} 
+                        required 
+                    />
+                    <input 
+                        type="number" 
+                        placeholder="Available Plates (Quantity)" 
+                        value={form.quantity} 
+                        onChange={e => setForm({...form, quantity: e.target.value})} 
+                        style={inputStyle} 
+                        required 
+                    />
                     <button type="submit" style={{ width: '100%', padding: '15px', background: '#800000', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Publish Banner</button>
                 </form>
 

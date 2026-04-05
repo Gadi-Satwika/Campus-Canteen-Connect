@@ -274,7 +274,7 @@ const Menu = () => {
       </nav>
 
       <div style={{ padding: '20px', zIndex: 10, maxWidth: '1100px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
-        <SpecialOrders />
+        <SpecialOrders addToCart={addToCart} />
 
         {!activeCategory ? (
           /* --- CATEGORY SELECTION VIEW --- */
