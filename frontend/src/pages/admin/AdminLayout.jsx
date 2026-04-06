@@ -32,7 +32,6 @@ const AdminLayout = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F8FAFC' }}>
       <AdminBackground />
 
-      {/* GLASS TOP BAR */}
       <header style={{
         height: '70px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -52,7 +51,6 @@ const AdminLayout = () => {
       </header>
 
       <div style={{ display: 'flex', marginTop: '70px', flex: 1 }}>
-        {/* HOVER EXPANDABLE SIDEBAR (LEFT) */}
         <aside 
           onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={() => setIsExpanded(false)}
@@ -86,13 +84,11 @@ const AdminLayout = () => {
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Live Orders</span>
             </NavLink>
 
-            {/* NEW: ANNOUNCEMENTS LINK */}
             <NavLink to="/admin/announcements" style={navItem}>
               <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>📢</span>
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Announcements</span>
             </NavLink>
 
-            {/* NEW: COMPLAINTS LINK */}
             <NavLink to="/admin/complaints" style={navItem}>
               <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛠️</span>
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Complaints</span>
@@ -109,7 +105,6 @@ const AdminLayout = () => {
           </div>
         </aside>
 
-        {/* CONTENT AREA */}
         <main style={{ 
           flex: 1, 
           marginLeft: '80px', 

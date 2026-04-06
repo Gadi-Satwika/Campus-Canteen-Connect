@@ -17,7 +17,6 @@ const AdminAnnouncements = () => {
   const handleSend = async (e) => {
     e.preventDefault();
     try {
-      // We explicitly add status: 'Active' when sending
       await axios.post('http://localhost:5000/api/announcements/add', { ...msg, status: 'Active' });
       alert("Broadcast Sent! 🚀");
       setMsg({ title: '', message: '', type: 'Info' });
@@ -25,11 +24,9 @@ const AdminAnnouncements = () => {
     } catch (err) { alert("Error broadcasting."); }
   };
 
-  // RENAME THIS TO MATCH YOUR BUTTON
   const handleRevoke = async (id) => {
     if (window.confirm("Revoke this announcement? Students will no longer see it.")) {
       try {
-        // We use PUT to change the status to Revoked
         await axios.put(`http://localhost:5000/api/announcements/update/${id}`, { status: 'Revoked' });
         fetchHistory();
       } catch (err) { alert("Revoke failed."); }
@@ -38,7 +35,6 @@ const AdminAnnouncements = () => {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', padding: '20px' }}>
-      {/* LEFT: POST FORM */}
       <div style={{ background: 'white', padding: '30px', borderRadius: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
         <h2 style={{ color: '#800000', marginTop: 0 }}>📢 New Broadcast</h2>
         <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -53,7 +49,6 @@ const AdminAnnouncements = () => {
         </form>
       </div>
 
-      {/* RIGHT: HISTORY & REVOKE */}
       <div style={{ background: 'white', padding: '30px', borderRadius: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', height: 'fit-content' }}>
         <h2 style={{ color: '#64748B', marginTop: 0 }}>📜 History</h2>
         {history.length > 0 ? history.map(h => (

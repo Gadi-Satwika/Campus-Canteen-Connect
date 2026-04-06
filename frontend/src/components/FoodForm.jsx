@@ -4,7 +4,7 @@ import axios from 'axios';
 const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
   const [food, setFood] = useState({ name: '', price: '', category: 'Breakfast', image: '', quantity: 10 });
 
-  // When editItem changes (from parent), fill the form
+
   useEffect(() => {
     if (editItem) {
       setFood({
@@ -20,7 +20,7 @@ const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
   const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    // Construct the data object carefully
+
     const payload = {
       name: food.name,
       price: Number(food.price) || 0,
@@ -30,7 +30,6 @@ const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
     };
 
     if (editItem) {
-      // Use the ID from the item we are currently editing
       await axios.put(`http://localhost:5000/api/food/edit/${editItem._id}`, payload);
       alert("Item Updated successfully!");
       setEditItem(null); 

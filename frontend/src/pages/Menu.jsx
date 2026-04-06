@@ -165,10 +165,7 @@ const Menu = () => {
   };
   const updateQty = (id, delta) => setCart(prev => prev.map(item => item._id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
   const removeFromCart = (id) => setCart(cart.filter(item => item._id !== id));
-
-  // 1. Unified Sync Function
   const syncHistory = async () => {
-    // DEBUG: If you see "EMAIL IS EMPTY" in F12 console, this is the bug!
     if (!userDetails.email) {
       console.log("CANNOT SYNC: EMAIL IS EMPTY");
       return;
@@ -180,22 +177,18 @@ const Menu = () => {
       
       if (res.data && Array.isArray(res.data)) {
         setHistory(res.data);
-        // This puts the REAL database data (Collected/Pending) back into storage
         localStorage.setItem('orderHistory', JSON.stringify(res.data));
       }
     } catch (err) {
       console.error("FETCH FAILED:", err);
     }
   };
-
-  // Ensure this runs whenever the userDetails (email) changes
   useEffect(() => {
     syncHistory();
   }, [userDetails.email]);
 
-  // Add this near your other useEffects
   useEffect(() => {
-    // If you use Firebase auth, get the email like this:
+
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setUserDetails(prev => ({ ...prev, email: user.email, name: user.displayName || prev.name }));
@@ -204,36 +197,32 @@ const Menu = () => {
     return () => unsubscribe();
   }, []);
 
-// 2. The Place Order Fix
   const handlePlaceOrder = async () => {
     if (!userDetails.name || !userDetails.email || !userDetails.dorm) return alert("Fill all details!");
     
     const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     const orderPayload = { 
-      items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })), 
+      items: cart.map(i => ({ foodId: i._id, name: i.name, quantity: i.quantity, price: i.price })), 
       totalAmount: total, 
       userName: userDetails.name, 
-      userEmail: userDetails.email, // Ensure this matches Admin handleDelete
+      userEmail: userDetails.email,
       dorm: userDetails.dorm, 
       paymentMethod: userDetails.method 
     };
 
     try {
       const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
-      // Add the new order to the top of history immediately
       setHistory(prev => [res.data, ...prev]);
       setOrderSummary(res.data);
       setCart([]);
       setShowCart(false);
       setCheckoutStep(1);
-      // Force a sync to make sure everything is aligned
       syncHistory();
     } catch (err) {
       alert("Order Failed!");
     }
   };
 
-// Unified Polling Effect
 
   const particlesInit = async (engine) => { await loadSlim(engine); };
 
@@ -277,7 +266,6 @@ const Menu = () => {
         <SpecialOrders addToCart={addToCart} />
 
         {!activeCategory ? (
-          /* --- CATEGORY SELECTION VIEW --- */
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
             {[ { id: 'Breakfast', icon: '☕', img: 'https://t3.ftcdn.net/jpg/00/78/87/94/360_F_78879462_KyMC4iWhDHLlEEZDAOLiDWPuubnAaMMk.jpg' }, 
               { id: 'Lunch', icon: '🍚', img: 'https://i0.wp.com/www.chitrasfoodbook.com/wp-content/uploads/2015/06/south-indian-lunch-menu-1.jpg?w=1200&ssl=1' }, 
@@ -290,13 +278,11 @@ const Menu = () => {
             ))}
           </div>
         ) : (
-          /* --- FILTERED ITEMS VIEW --- */
           <div>
             <button onClick={() => setActiveCategory(null)} style={{ background: '#800000', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '12px', cursor: 'pointer', marginBottom: '30px', fontWeight: 'bold' }}>⬅ Back to Categories</button>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '30px' }}>
               {items.filter(i => i.category === activeCategory).map(item => {
-                // 1. RUN THE AVAILABILITY CHECK FOR EACH ITEM
                 const { canOrder, reason } = checkFoodStatus(item);
 
                 return (
@@ -305,11 +291,10 @@ const Menu = () => {
                     borderRadius: '25px', 
                     overflow: 'hidden', 
                     boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
-                    position: 'relative', // CRITICAL: This anchors the "Locked" badge to the card
+                    position: 'relative', 
                     opacity: canOrder ? 1 : 0.6,
                     filter: canOrder ? 'none' : 'grayscale(1)'
                   }}>
-                    {/* 2. THE FLOATING BADGE (Only shows when locked) */}
                     {!canOrder && (
                       <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#800000', color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 5, boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
                         {reason}
@@ -323,7 +308,6 @@ const Menu = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#800000', fontWeight: '900', fontSize: '1.6rem' }}>₹{item.price}</span>
                         
-                        {/* 3. THE SMART BUTTON */}
                         <button 
                           disabled={!canOrder}
                           onClick={() => addToCart(item)} 
@@ -340,7 +324,26 @@ const Menu = () => {
                           {canOrder ? 'Add +' : 'Locked'}
                         </button>
                       </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '10px' }}>
+                          <span style={{ color: '#F59E0B' }}>★</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+                              {item.ratings?.average > 0 ? item.ratings.average.toFixed(1) : "New"}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
+                              ({item.ratings?.count || 0})
+                          </span>
+                      </div>
                     </div>
+                    {item.reviews && item.reviews.length > 0 && item.reviews[item.reviews.length - 1].comment.trim() !== "" ? (
+                      <div style={{ marginTop: '10px', padding: '10px', background: '#F8FAFC', borderRadius: '12px' }}>
+                        <p style={{ fontSize: '0.75rem', color: '#64748B', fontStyle: 'italic', margin: 0 }}>
+                          "{item.reviews[item.reviews.length - 1].comment}"
+                        </p>
+                        <p style={{ fontSize: '0.65rem', color: '#94A3B8', margin: '4px 0 0 0', textAlign: 'right' }}>
+                          — {item.reviews[item.reviews.length - 1].userName || "Anonymous"}
+                        </p>
+                      </div>
+                    ) : null} 
                   </div>
                 );
               })}
@@ -394,6 +397,7 @@ const Menu = () => {
     history={history}
     orderSummary={orderSummary}
     setOrderSummary={setOrderSummary}
+    fetchHistory={syncHistory}
   />
     </div>
   );

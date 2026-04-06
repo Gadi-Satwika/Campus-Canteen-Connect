@@ -7,7 +7,6 @@ const SpecialOrders = ({ addToCart }) => {
     const [loading, setLoading] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // --- CONFIGURATION: Add as many banners as you like here ---
     const staticBanners = [
         {
             title: "FLAT 50% OFF",
@@ -29,11 +28,10 @@ const SpecialOrders = ({ addToCart }) => {
         }
     ];
 
-    // --- AUTOMATIC TRANSITION LOGIC ---
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % staticBanners.length);
-        }, 5000); // Changes every 5 seconds
+        }, 5000); 
         return () => clearInterval(timer);
     }, [staticBanners.length]);
 
@@ -53,7 +51,6 @@ const SpecialOrders = ({ addToCart }) => {
 
     return (
         <div style={{ marginBottom: '35px', width: '100%' }}>
-            {/* MAIN CAROUSEL BANNER */}
             <div style={{ 
                 width: '100%', 
                 height: '210px', 
@@ -111,7 +108,6 @@ const SpecialOrders = ({ addToCart }) => {
                 </div>
             </div>
 
-            {/* SPECIALS MODAL (The Popup) */}
             {showModal && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(8px)' }}>
                     <div style={{ background: 'white', width: '100%', maxWidth: '480px', borderRadius: '32px', padding: '35px', position: 'relative', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
@@ -142,7 +138,7 @@ const SpecialOrders = ({ addToCart }) => {
                                 name: s.title,
                                 price: s.price,
                                 image: s.image,
-                                isSpecial: true // Flag for Admin
+                                isSpecial: true
                             });
                             alert(`${s.title} added to cart!`);
                         }}

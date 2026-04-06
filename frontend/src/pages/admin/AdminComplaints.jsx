@@ -13,10 +13,9 @@ const AdminComplaints = () => {
 
     const markResolved = async (id) => {
         try {
-            // This updates the status to Resolved in the backend
             await axios.put(`http://localhost:5000/api/complaints/update/${id}`, { status: 'Resolved' });
             alert("Issue marked as Resolved! ✅");
-            fetchAll(); // Refresh the list
+            fetchAll(); 
         } catch (err) {
             alert("Could not update status.");
         }
@@ -39,8 +38,7 @@ const AdminComplaints = () => {
                     opacity: c.status === 'Withdrawn' ? 0.7 : 1, // Fades out withdrawn items
                     transition: '0.3s'
                 }}>
-                    
-                    {/* IMAGE SECTION */}
+
                     {c.image && (
                         <div style={{ filter: c.status === 'Withdrawn' ? 'grayscale(100%)' : 'none' }}>
                             <img 
