@@ -244,7 +244,15 @@ const Menu = () => {
 
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', background: '#800000', color: 'white', position: 'sticky', top: 0, zIndex: 2000, boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: 'white', color: '#800000', padding: '6px 12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1.2rem' }}>RC</div>
+          <div style={{ background: 'transparent', color: '#800000', padding: '6px 12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1.2rem' }}><img 
+          src="/Rgukt_Logo_noBG.png" 
+          alt="RGUKT Logo" 
+          style={{ 
+            width: '45px', 
+            height: '45px', 
+            objectFit: 'contain'
+          }} 
+        /></div>
           <h2 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '1px' }}>CAMPUS CANTEEN</h2>
         </div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center', fontWeight: '600' }}>

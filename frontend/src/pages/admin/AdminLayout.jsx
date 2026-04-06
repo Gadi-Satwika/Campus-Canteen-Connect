@@ -39,7 +39,15 @@ const AdminLayout = () => {
         top: 0, width: '100%', zIndex: 1100, boxSizing: 'border-box'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', background: '#800000', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>R</div>
+          <div style={{ background: 'transparent', color: '#800000', padding: '6px 12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1.2rem' }}><img 
+          src="/rgukt-logo.png" 
+          alt="RGUKT Logo" 
+          style={{ 
+            width: '45px', 
+            height: '45px', 
+            objectFit: 'contain'
+          }} 
+        /></div>
           <h2 style={{ color: '#1E293B', fontSize: '1.1rem', margin: 0, letterSpacing: '0.5px' }}>CAMPUS <span style={{fontWeight: '400'}}>CONNECT</span></h2>
         </div>
         <button onClick={handleLogout} style={{
