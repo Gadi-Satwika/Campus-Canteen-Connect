@@ -7,7 +7,6 @@ const Dashboard = () => {
     pendingCount: 0,
     collectedToday: 0,
     menuCount: 0,
-    lowStock: 0,
     specialSales: 0
   });
 
@@ -85,7 +84,6 @@ const Dashboard = () => {
         }).length,
         collectedToday: todayOrders.filter(o => o.status?.toLowerCase() === 'collected').length,
         menuCount: menuRes.data.length,
-        lowStock: menuRes.data.filter(i => i.quantity < 5).length,
         specialSales: specialsCount
       });
 
@@ -124,7 +122,6 @@ const Dashboard = () => {
         <StatCard title="Revenue (Today)" value={`₹${stats.totalRevenue}`} color="#800000" icon="💰" delay="0.1s" />
         <StatCard title="Orders in Kitchen" value={stats.pendingCount} color="#F59E0B" icon="🍳" delay="0.2s" isLive={stats.pendingCount > 0} />
         <StatCard title="Special Item Sales" value={stats.specialSales} color="#3B82F6" icon="🚀" delay="0.3s" />
-        <StatCard title="Low Stock Items" value={stats.lowStock} color={stats.lowStock > 0 ? "#EF4444" : "#10B981"} icon="⚠️" delay="0.4s" />
       </div>
 
 

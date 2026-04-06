@@ -98,7 +98,7 @@ const AdminLayout = () => {
             </NavLink>
 
             <NavLink to="/admin/complaints" style={navItem}>
-              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>🛠️</span>
+              <span style={{ fontSize: '1.5rem', minWidth: '30px', textAlign: 'center' }}>💬</span>
               <span style={{ opacity: isExpanded ? 1 : 0, transition: '0.3s', fontWeight: '700' }}>Complaints</span>
             </NavLink>
 

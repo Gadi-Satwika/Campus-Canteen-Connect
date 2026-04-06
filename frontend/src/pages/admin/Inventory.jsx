@@ -97,7 +97,6 @@ const Inventory = () => {
                 <th style={{ padding: '15px' }}>Item</th>
                 <th>Status Flags</th>
                 <th>Price</th>
-                <th>Stock</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -130,7 +129,6 @@ const Inventory = () => {
                     </td>
 
                     <td style={{ fontWeight: '900', color: '#800000' }}>₹{item.price}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{item.quantity}</td>
 
                     <td style={{ position: 'relative' }}>
                       <button onClick={() => setActiveMenu(activeMenu === item._id ? null : item._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>⋮</button>

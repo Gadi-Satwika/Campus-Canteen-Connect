@@ -265,7 +265,7 @@ const Menu = () => {
             🔔
             {showBellDot && <span style={{ position: 'absolute', top: '0', right: '0', width: '10px', height: '10px', background: '#EF4444', borderRadius: '50%', border: '2px solid white', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></span>}
           </div>
-          <div onClick={() => { setShowComplaint(true); fetchMyComplaints(); }} style={{ cursor: 'pointer', fontSize: '1.4rem' }}>🛠️</div>
+          <div onClick={() => { setShowComplaint(true); fetchMyComplaints(); }} style={{ cursor: 'pointer', fontSize: '1.4rem' }}>💬</div>
           <button onClick={handleLogout} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>Logout</button>
         </div>
       </nav>
