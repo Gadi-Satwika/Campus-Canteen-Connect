@@ -3,10 +3,8 @@ const router = express.Router();
 const Order = require('../models/Order');  
 const transporter = require('../config/mailer');     
 
-// --- NEW: GET ORDERS FOR SPECIFIC USER (This was missing!) ---
 router.get('/user/:email', async (req, res) => {
     try {
-        // This finds EVERY order matching the email, no matter the date
         const orders = await Order.find({ userEmail: req.params.email }).sort({ createdAt: -1 });
         
         console.log(`Found ${orders.length} orders for ${req.params.email}`);
@@ -15,7 +13,7 @@ router.get('/user/:email', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// 1. GET CURRENT SERVING
+
 router.get('/current-serving', async (req, res) => {
     try {
         const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -27,7 +25,7 @@ router.get('/current-serving', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 2. PLACE ORDER
+
 router.post('/place', async (req, res) => {
     try {
         const { items, totalAmount, userName, userEmail, dorm, paymentMethod } = req.body;
@@ -46,7 +44,6 @@ router.post('/place', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. GET ALL ORDERS (History for last 10 days)
 router.get('/all', async (req, res) => {
     try {
         const tenDaysAgo = new Date(); tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
@@ -55,18 +52,15 @@ router.get('/all', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. UPDATE STATUS & SEND EMAIL
 router.put('/status/:id', async (req, res) => {
   try {
     const { status, reason } = req.body;
-    // 1. Update the Database
+
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id, 
       { status: status }, 
       { new: true } 
     );
-
-    // 2. If it's a deletion, send the email
     if (status === 'Deleted' && reason) {
         const mailOptions = {
             from: process.env.EMAIL_USER,

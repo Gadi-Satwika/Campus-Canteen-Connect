@@ -8,17 +8,15 @@ const Inventory = () => {
   const [activeMenu, setActiveMenu] = useState(null);
   const [editItem, setEditItem] = useState(null);
 
-  // --- 🧠 THE BRAIN (Now included here to prevent ReferenceError) ---
  const checkFoodStatus = (item) => {
     const hour = new Date().getHours();
     
-    // Normalize string checks to lowercase to avoid "Auto" vs "auto" bugs
+
     const mode = item.availabilityMode ? item.availabilityMode.toLowerCase() : 'auto';
     const isManualOut = item.isAvailable === false;
 
     if (isManualOut) return { canOrder: false, reason: "Sold Out" };
     
-    // If it is NOT in auto mode, it is FORCE ENABLED
     if (mode !== 'auto') return { canOrder: true, reason: "" };
 
     const timings = {
@@ -27,7 +25,7 @@ const Inventory = () => {
         'Snacks':    { start: 16, end: 24 }
     };
 
-    const window = timings[item.category]; // Ensure category matches 'Breakfast' exactly
+    const window = timings[item.category]; 
     if (window) {
         if (hour >= window.start && hour < window.end) return { canOrder: true, reason: "" };
         return { canOrder: false, reason: "Time Locked" };
@@ -86,14 +84,12 @@ const Inventory = () => {
       </div>
 
       <div className="inventory-grid" style={{ display: 'flex', flexDirection: 'row', gap: '2rem', marginTop: '30px' }}>
-        
-        {/* FORM SIDE */}
+
         <div style={{ flex: '0 0 380px', background: '#FFFDF5', padding: '2rem', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: 'fit-content' }}>
           <h3 style={{ color: '#800000', marginTop: 0 }}>{editItem ? '📝 Edit Entry' : '✨ New Entry'}</h3>
           <FoodForm onUploadSuccess={fetchItems} editItem={editItem} setEditItem={setEditItem} />
         </div>
 
-        {/* TABLE SIDE */}
         <div style={{ flex: 1, background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -113,8 +109,8 @@ const Inventory = () => {
                 return (
                   <tr key={item._id} style={{ 
                       borderBottom: '1px solid #F8FAFC',
-                      opacity: isTimeLocked ? 0.4 : 1, // DIM THE ROW
-                      background: isTimeLocked ? '#F8FAFC' : 'white', // GRAY THE BACKGROUND
+                      opacity: isTimeLocked ? 0.4 : 1, 
+                      background: isTimeLocked ? '#F8FAFC' : 'white', 
                       transition: 'opacity 0.3s ease'
                   }}>
                     <td style={{ padding: '15px' }}>

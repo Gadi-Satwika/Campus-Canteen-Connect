@@ -35,7 +35,7 @@ router.get('/all', async (req, res) => {
     }
 });
 
-// FIX: Changed '/revoke/:id' to '/update/:id' to match your Admin side axios call
+
 router.put('/update/:id', async (req, res) => {
     try {
         const updated = await Announcement.findByIdAndUpdate(

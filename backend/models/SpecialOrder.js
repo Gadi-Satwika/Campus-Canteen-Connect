@@ -1,13 +1,25 @@
 const mongoose = require('mongoose');
 
-// backend/models/SpecialOrder.js
+
 const SpecialOrderSchema = new mongoose.Schema({
-    title: { type: String, required: true },    // e.g., "Special Pulihora"
-    subtitle: { type: String },                 // e.g., "Limited Saturday Special"
+    title: { type: String, required: true },   
+    subtitle: { type: String },                
     image: { type: String, required: true },
-    price: { type: Number, required: true },    // DIRECT PRICE
-    quantity: { type: Number, default: 0 },     // DIRECT STOCK
-    isActive: { type: Boolean, default: true }
+    price: { type: Number, required: true }, 
+    quantity: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    ratings: {
+        average: { type: Number, default: 0 },
+        count: { type: Number, default: 0 }
+    },
+    reviews: [
+        {
+            userName: String,
+            rating: Number,
+            comment: String,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('SpecialOrder', SpecialOrderSchema);

@@ -10,7 +10,6 @@ const LiveOrders = () => {
   const [scannerOpen, setScannerOpen] = useState(false);
 
 
-  // 1. DATABASE FETCH: Polling every 5 seconds
   const fetchOrders = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/orders/all');
@@ -24,13 +23,11 @@ const LiveOrders = () => {
     if (!reason) return;
 
     try {
-      // 1. UPDATE STATUS TO DELETED
       await axios.put(`http://localhost:5000/api/orders/status/${orderId}`, { 
         status: 'Deleted',
         reason: reason 
       });
 
-      // 2. TRIGGER EMAIL
       await axios.post(`http://localhost:5000/api/orders/send-cancellation-email`, {
         email: userEmail,
         reason: reason,
@@ -38,7 +35,7 @@ const LiveOrders = () => {
       });
 
       alert("✅ Order Cancelled and Email Sent!");
-      fetchOrders(); // Refresh the list to remove the card
+      fetchOrders(); 
     } catch (err) {
       console.error(err);
       alert("❌ Error: Order status updated but email might have failed.");
@@ -52,7 +49,6 @@ const LiveOrders = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 2. PHONEPE-STYLE SCANNER LOGIC
   useEffect(() => {
     if (scannerOpen) {
       const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
@@ -68,7 +64,7 @@ const LiveOrders = () => {
     }
   }, [scannerOpen]);
 
-  // 3. STATUS LOGIC (Including Email Trigger)
+
   const handleStatusUpdate = async (id, newStatus) => {
     try {
       await axios.put(`http://localhost:5000/api/orders/status/${id}`, { status: newStatus });
@@ -81,7 +77,7 @@ const LiveOrders = () => {
     } catch (err) { alert("❌ Action failed."); }
   };
 
-  // inside Admin LiveOrders.jsx
+
 
 const handleDeleteOrder = async (id) => {
   const reason = window.prompt("Enter reason for cancellation (sent to student email):");
@@ -92,12 +88,12 @@ const handleDeleteOrder = async (id) => {
                 reason: reason 
             });
             alert("Order marked as Deleted and Student notified.");
-            fetchOrders(); // Refresh the list
+            fetchOrders(); 
         } catch (err) { alert("Action failed."); }
     }
   };
 
-  // In your JSX button:
+
   <button onClick={() => handleDeleteOrder(order._id)} style={{ color: 'red' }}>
     🗑️ Cancel Order
   </button>
@@ -112,14 +108,12 @@ const handleDeleteOrder = async (id) => {
     } catch (e) { alert("ID not found"); }
   };
 
-  // 4. DATA GROUPING (Live vs 10-Day History)
-  // 4. DATA GROUPING (Live vs 10-Day History)
   const todayStr = new Date().toDateString();
 
   const liveStream = allOrders.filter(o => 
     new Date(o.createdAt).toDateString() === todayStr && 
     o.status !== 'Collected' && 
-    o.status !== 'Deleted' // This hides the card from Admin Feed immediately
+    o.status !== 'Deleted' 
   );
 
   const filteredLive = liveStream.filter(o => 
@@ -127,10 +121,8 @@ const handleDeleteOrder = async (id) => {
     String(o.tokenNumber).includes(searchTerm)
   );
 
-  // Group history by date for the last 10 days
-  // Inside LiveOrders.jsx
 const groupedHistory = allOrders
-  .filter(o => o.status === 'Collected' || o.status === 'Deleted') // Include both!
+  .filter(o => o.status === 'Collected' || o.status === 'Deleted') 
   .reduce((groups, order) => {
     const date = new Date(order.createdAt).toDateString();
     if (!groups[date]) groups[date] = [];
@@ -138,7 +130,6 @@ const groupedHistory = allOrders
     return groups;
   }, {});
 
-  // In Admin's LiveOrders.jsx or similar
   const markAsReady = async (orderId) => {
     await axios.put(`http://localhost:5000/api/orders/update/${orderId}`, { status: 'Ready' });
   };
@@ -146,7 +137,6 @@ const groupedHistory = allOrders
   return (
     <div style={{ padding: '20px', background: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       
-      {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ fontWeight: '900', color: '#1E293B', margin: 0 }}>Live Canteen Feed</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -162,13 +152,11 @@ const groupedHistory = allOrders
       </div>
 
       {!viewHistory ? (
-        /* --- LIVE FEED SECTION --- */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {filteredLive.length > 0 ? filteredLive.map(order => (
             <div key={order._id} style={{ background: 'white', padding: '20px', borderRadius: '25px', border: `2px solid ${order.status === 'Ready' ? '#16A34A' : '#E2E8F0'}`, boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <h2 style={{ margin: 0, color: '#800000' }}>#{order.tokenNumber}</h2>
-                {/* FIX: Passing both ID and Email to the function */}
                 <button onClick={() => handleDelete(order._id, order.userEmail)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>🗑️</button>
               </div>
               <p style={{ fontWeight: 'bold', margin: '10px 0' }}>{order.userName}</p>
@@ -176,8 +164,6 @@ const groupedHistory = allOrders
               <div style={{ background: '#F8FAFC', padding: '10px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '15px' }}>
                 {order.items.map((it, idx) => <div key={idx}>{it.name} x{it.quantity}</div>)}
               </div>
-
-              {/* EXPLICIT STATUS CHECK */}
               {order.status === 'Ready' ? (
                 <div style={{ textAlign: 'center', color: '#16A34A', fontWeight: 'bold', padding: '12px', border: '1px solid #16A34A', borderRadius: '12px' }}>
                   WAITING FOR SCAN...
@@ -199,59 +185,52 @@ const groupedHistory = allOrders
           )}
         </div>
       ) : (
-        /* --- 10-DAY HISTORY SECTION --- */
-        /* --- 10-DAY HISTORY SECTION --- */
-<div>
-  {Object.keys(groupedHistory).length > 0 ? Object.keys(groupedHistory).slice(0, 10).map(date => (
-    <div key={date} style={{ marginBottom: '30px' }}>
-      <h3 style={{ color: '#800000', borderBottom: '2px solid #EEE', paddingBottom: '10px' }}>{date}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', marginTop: '15px' }}>
-        {groupedHistory[date].map(h => (
-          <div key={h._id} style={{ background: 'white', padding: '15px', borderRadius: '15px', border: '1px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong>Token #{h.tokenNumber}</strong>
-              
-              {/* STATUS BADGE FOR ADMIN HISTORY */}
-              <span style={{ 
-                fontSize: '0.6rem', 
-                padding: '4px 8px', 
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                background: h.status === 'Deleted' ? '#FEE2E2' : '#DBEAFE',
-                color: h.status === 'Deleted' ? '#991B1B' : '#1E40AF'
-              }}>
-                {h.status === 'Deleted' ? 'CANCELLED' : 'COLLECTED'}
-              </span>
-            </div>
-            <div style={{ marginTop: '5px' }}>
-              <small style={{ color: '#64748B', display: 'block' }}>{h.userName}</small>
-              <strong style={{ color: '#800000' }}>₹{h.totalAmount}</strong>
+      <div>
+        {Object.keys(groupedHistory).length > 0 ? Object.keys(groupedHistory).slice(0, 10).map(date => (
+          <div key={date} style={{ marginBottom: '30px' }}>
+            <h3 style={{ color: '#800000', borderBottom: '2px solid #EEE', paddingBottom: '10px' }}>{date}</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', marginTop: '15px' }}>
+              {groupedHistory[date].map(h => (
+                <div key={h._id} style={{ background: 'white', padding: '15px', borderRadius: '15px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong>Token #{h.tokenNumber}</strong>
+                    
+                    {/* STATUS BADGE FOR ADMIN HISTORY */}
+                    <span style={{ 
+                      fontSize: '0.6rem', 
+                      padding: '4px 8px', 
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      background: h.status === 'Deleted' ? '#FEE2E2' : '#DBEAFE',
+                      color: h.status === 'Deleted' ? '#991B1B' : '#1E40AF'
+                    }}>
+                      {h.status === 'Deleted' ? 'CANCELLED' : 'COLLECTED'}
+                    </span>
+                  </div>
+                  <div style={{ marginTop: '5px' }}>
+                    <small style={{ color: '#64748B', display: 'block' }}>{h.userName}</small>
+                    <strong style={{ color: '#800000' }}>₹{h.totalAmount}</strong>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        )) : (
+          <div style={{ textAlign: 'center', padding: '100px' }}><h3>No history records found.</h3></div>
+        )}
       </div>
-    </div>
-  )) : (
-    <div style={{ textAlign: 'center', padding: '100px' }}><h3>No history records found.</h3></div>
-  )}
-</div>
-      )}
-
-      {/* --- FLOATING SCANNER ICON (PhonePe Style) --- */}
+            )}
       <button 
         onClick={() => setScannerOpen(true)}
         style={{ position: 'fixed', bottom: '30px', right: '30px', width: '70px', height: '70px', borderRadius: '50%', background: '#800000', color: 'white', fontSize: '1.8rem', border: 'none', boxShadow: '0 10px 30px rgba(128,0,0,0.4)', cursor: 'pointer', zIndex: 1000 }}
       >
         📷
       </button>
-
-      {/* --- SCANNER MODAL (Includes Manual Fetch & Handover UI) --- */}
       {scannerOpen || scannedOrder ? (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
           <div style={{ background: 'white', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '450px', position: 'relative' }}>
             
             {scannedOrder ? (
-              /* HANDOVER UI */
               <div style={{ textAlign: 'center' }}>
                 <div style={{ background: '#F0FDF4', padding: '20px', borderRadius: '20px', border: '2px solid #16A34A', marginBottom: '20px' }}>
                   <h1 style={{ fontSize: '4rem', color: '#16A34A', margin: 0 }}>#{scannedOrder.tokenNumber}</h1>
@@ -263,7 +242,6 @@ const groupedHistory = allOrders
                 <button onClick={() => handleStatusUpdate(scannedOrder._id, 'Collected')} style={{ width: '100%', padding: '18px', background: '#16A34A', color: 'white', borderRadius: '15px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>COMPLETE HANDOVER ✅</button>
               </div>
             ) : (
-              /* SCANNER UI */
               <div>
                 <h3 style={{ textAlign: 'center', margin: '0 0 20px 0' }}>Handover Scanner</h3>
                 <div id="reader" style={{ borderRadius: '15px', overflow: 'hidden' }}></div>

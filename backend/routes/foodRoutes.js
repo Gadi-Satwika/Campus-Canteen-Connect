@@ -1,8 +1,42 @@
 const express = require('express');
 const router = express.Router();
+const Order = require('../models/Order'); 
 const FoodItem = require('../models/FoodItem');
+const SpecialOrder = require('../models/SpecialOrder');
 
-// 1. ADD ITEM (Keep as is, but ensure schema defaults apply)
+
+router.post('/rate/:id', async (req, res) => {
+    try {
+        const { rating, comment, userName, orderId } = req.body;
+        const targetId = req.params.id;
+
+        if (orderId) {
+            await Order.findByIdAndUpdate(orderId, { isRated: true });
+        }
+        let item = await FoodItem.findById(targetId) || await SpecialOrder.findById(targetId);
+
+        if (!item) {
+            return res.status(404).json({ message: "Food item no longer exists in menu" });
+        }
+
+        if (!item.ratings) item.ratings = { average: 0, count: 0 };
+        const oldCount = item.ratings.count || 0;
+        const oldAvg = item.ratings.average || 0;
+        
+        item.ratings.count = oldCount + 1;
+        item.ratings.average = ((oldAvg * oldCount) + Number(rating)) / (oldCount + 1);
+        item.reviews.push({ userName, rating: Number(rating), comment });
+
+        await item.save();
+        res.json({ message: "Review Saved" });
+
+    } catch (err) {
+        console.error("Rating Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 router.post('/add', async (req, res) => {
     try {
         const { name, price, image, category, quantity } = req.body;
@@ -22,11 +56,8 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// 2. GET MENU (Modified for Real-World Logic)
 router.get('/menu', async (req, res) => {
     try {
-        // We fetch everything. The Frontend 'AvailabilityEngine' 
-        // will decide if it's Grayscale or Clickable.
         const items = await FoodItem.find().sort({ createdAt: -1 });
         res.json(items);
     } catch (err) {
@@ -34,10 +65,6 @@ router.get('/menu', async (req, res) => {
     }
 });
 
-// 3. GENERIC UPDATE (Replaces /edit and /toggle)
-// backend/routes/foodRoutes.js
-
-// ONE ROUTE TO RULE THEM ALL
 router.put('/update/:id', async (req, res) => {
     try {
         // req.body can now contain {isAvailable: false} OR {availabilityMode: 'Auto'} 
@@ -56,7 +83,6 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
-// 4. DELETE ITEM
 router.delete('/:id', async (req, res) => {
     try {
         await FoodItem.findByIdAndDelete(req.params.id);
@@ -65,5 +91,7 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
 
 module.exports = router;
