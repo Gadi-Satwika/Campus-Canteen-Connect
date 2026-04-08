@@ -54,25 +54,53 @@ router.get('/all', async (req, res) => {
 
 router.put('/status/:id', async (req, res) => {
   try {
-    const { status, reason } = req.body;
+    const { status, reason} = req.body;
 
+    // 1. Update the order status in MongoDB
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id, 
       { status: status }, 
       { new: true } 
     );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // 2. CASE: Order is Cancelled (Deleted)
     if (status === 'Deleted' && reason) {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"RKV Canteen Support" <${process.env.EMAIL_USER}>`,
             to: updatedOrder.userEmail,
             subject: `❌ Order Cancelled - Token #${updatedOrder.tokenNumber}`,
-            html: `<p>Your order was cancelled. <b>Reason:</b> ${reason}</p>`
+            html: `<h3>Hi ${updatedOrder.userName},</h3>
+                   <p>Your order has been cancelled.</p>
+                   <p><b>Reason:</b> ${reason}</p>
+                   <p>Please contact the counter if you have any questions.</p>`
         };
         await transporter.sendMail(mailOptions);
     }
 
+    // 3. CASE: Order is Ready for Collection
+    if (status === 'Ready' && updatedOrder.userEmail) {
+        const mailOptions = {
+            from: `"RKV Canteen" <${process.env.EMAIL_USER}>`,
+            to: updatedOrder.userEmail,
+            subject: `🍔 Order Ready! Token #${updatedOrder.tokenNumber}`,
+            html: `<h2>Hi ${updatedOrder.userName},</h2>
+                   <p>Your delicious food is ready for collection!</p>
+                   <p><b>Token Number:</b> #${updatedOrder.tokenNumber}</p>
+                   <p>Please show your QR code at the counter to collect your order.</p>                   `
+        };
+        // Use await here to ensure it finishes before sending response
+        await transporter.sendMail(mailOptions);
+    }
+
+    // 4. Send the updated order back to the frontend
     res.status(200).json(updatedOrder);
+
   } catch (err) {
+    console.error("Status Update Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -95,5 +123,6 @@ router.get('/:id', async (req, res) => {
         res.json(order);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
 
 module.exports = router;
