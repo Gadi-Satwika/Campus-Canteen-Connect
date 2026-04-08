@@ -7,6 +7,8 @@ import axios from 'axios';
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 
+import AIChatBot from '../components/AIChatBot';
+
 import SpecialOrders from '../components/SpecialOrders';
 import AnnouncementModal from '../components/AnnouncementModal';
 import SupportModal from '../components/SupportModal';
@@ -407,6 +409,8 @@ const Menu = () => {
     setOrderSummary={setOrderSummary}
     fetchHistory={syncHistory}
   />
+
+      <AIChatBot />
     </div>
   );
 };

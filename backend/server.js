@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,7 +13,7 @@ const complaintRoutes = require('./routes/complaintRoutes');
 
 const specialRoutes = require('./routes/specialRoutes'); 
 
-require('dotenv').config();
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
@@ -35,7 +37,8 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/specials', specialRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-//app.use('/api/complaints', complaintRoutes);
+
+app.use('/api/ai', aiRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
