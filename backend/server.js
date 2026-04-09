@@ -20,7 +20,11 @@ const aiRoutes = require('./routes/aiRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: "*", // This allows ANY frontend to talk to your backend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.use(express.json());
 
 // Database

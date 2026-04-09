@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../api'
 import axios from 'axios';
 
 const SpecialOrders = ({ addToCart }) => {
@@ -39,7 +40,7 @@ const SpecialOrders = ({ addToCart }) => {
         setLoading(true);
         setShowModal(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/specials/all');
+            const res = await API.get('/specials/all');
             setDbSpecials(res.data);
         } catch (err) {
             console.error("Fetch specials failed");

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API from '../api'
 import { QRCodeCanvas } from 'qrcode.react';
 
 
@@ -45,7 +46,7 @@ const HistoryModal = ({ isOpen, onClose, viewHistory, setViewHistory, history, o
             const targetId = item.foodId || item._id;
             
             try {
-                return await axios.post(`http://localhost:5000/api/food/rate/${targetId}`, {
+                return await API.post(`/food/rate/${targetId}`, {
                     rating: score,
                     comment: comment,
                     userName: userDetails?.name || "Student",
