@@ -40,5 +40,21 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/ai', aiRoutes);
 
+
+app.get('/test-email', async (req, res) => {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.ADMIN_EMAIL,
+      to: process.env.ADMIN_EMAIL, // Sending to yourself to test
+      subject: "Railway Connection Test",
+      text: "If you see this, the backend connection is working!"
+    });
+    res.json({ success: true, message: "Email sent!", info: info.response });
+  } catch (error) {
+    console.error("TEST EMAIL FAILED:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
