@@ -56,6 +56,10 @@ router.put('/status/:id', async (req, res) => {
   try {
     const { status, reason} = req.body;
 
+    // This will show up in your Railway "Deploy Logs"
+    console.log("--- DEBUG START ---");
+    console.log("1. Status received from frontend:", status);
+
     // 1. Update the order status in MongoDB
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id, 
@@ -69,6 +73,7 @@ router.put('/status/:id', async (req, res) => {
 
     // 2. CASE: Order is Cancelled (Deleted)
     if (status === 'Deleted' && reason) {
+        console.log("4. Entering 'Deleted' email block...");
         const mailOptions = {
             from: `"RKV Canteen Support" <${process.env.EMAIL_USER}>`,
             to: updatedOrder.userEmail,
@@ -83,6 +88,7 @@ router.put('/status/:id', async (req, res) => {
 
     // 3. CASE: Order is Ready for Collection
     if (status === 'Ready' && updatedOrder.userEmail) {
+        console.log("4. Entering 'Ready' email block...");
         const mailOptions = {
             from: `"RKV Canteen" <${process.env.EMAIL_USER}>`,
             to: updatedOrder.userEmail,
