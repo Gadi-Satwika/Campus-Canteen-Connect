@@ -1,18 +1,21 @@
 const nodemailer = require('nodemailer');
 
-// Manual configuration to bypass cloud network restrictions
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // Must be false for port 587
+  secure: false, 
   auth: {
     user: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_PASSWORD
+    pass: process.env.ADMIN_PASSWORD,
   },
+  // FORCE IPv4 to bypass the ENETUNREACH error
+  family: 4, 
+  debug: true,
+  logger: true,
   tls: {
-    // This allows the mail to send even if the cloud server has strict SSL rules
-    rejectUnauthorized: false 
-  }
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 15000 
 });
 
 module.exports = transporter;
