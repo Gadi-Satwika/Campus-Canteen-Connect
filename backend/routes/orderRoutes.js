@@ -54,13 +54,9 @@ router.get('/all', async (req, res) => {
 
 router.put('/status/:id', async (req, res) => {
   try {
-    const { status, reason} = req.body;
+    const { status, reason } = req.body;
 
-    // This will show up in your Railway "Deploy Logs"
-    console.log("--- DEBUG START ---");
-    console.log("1. Status received from frontend:", status);
-
-    // 1. Update the order status in MongoDB
+    // 1. Update the order status in MongoDB first
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id, 
       { status: status }, 
@@ -71,43 +67,43 @@ router.put('/status/:id', async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // 2. CASE: Order is Cancelled (Deleted)
+    // 2. SEND SUCCESS RESPONSE IMMEDIATELY
+    // This ensures your popup appears instantly and stops the "Timeout" error
+    res.status(200).json(updatedOrder);
+
+    // 3. HANDLE EMAILS IN THE BACKGROUND (Notice: No 'await' here)
     if (status === 'Deleted' && reason) {
-        console.log("4. Entering 'Deleted' email block...");
         const mailOptions = {
             from: `"RKV Canteen Support" <${process.env.ADMIN_EMAIL}>`,
             to: updatedOrder.userEmail,
             subject: `❌ Order Cancelled - Token #${updatedOrder.tokenNumber}`,
             html: `<h3>Hi ${updatedOrder.userName},</h3>
                    <p>Your order has been cancelled.</p>
-                   <p><b>Reason:</b> ${reason}</p>
-                   <p>Please contact the counter if you have any questions.</p>`
+                   <p><b>Reason:</b> ${reason}</p>`
         };
-        await transporter.sendMail(mailOptions);
+        // No await: let it finish in the background
+        transporter.sendMail(mailOptions).catch(e => console.log("Email Error:", e.message));
     }
 
-    // 3. CASE: Order is Ready for Collection
     if (status === 'Ready' && updatedOrder.userEmail) {
-        console.log("4. Entering 'Ready' email block...");
         const mailOptions = {
             from: `"RKV Canteen" <${process.env.ADMIN_EMAIL}>`,
             to: updatedOrder.userEmail,
             subject: `🍔 Order Ready! Token #${updatedOrder.tokenNumber}`,
             html: `<h2>Hi ${updatedOrder.userName},</h2>
-                   <p>Your delicious food is ready for collection!</p>
-                   <p><b>Token Number:</b> #${updatedOrder.tokenNumber}</p>
-                   <p>Please show your QR code at the counter to collect your order.</p>                   `
+                   <p>Your delicious food is ready!</p>
+                   <p><b>Token Number:</b> #${updatedOrder.tokenNumber}</p>`
         };
-        // Use await here to ensure it finishes before sending response
-        await transporter.sendMail(mailOptions);
+        // No await: let it finish in the background
+        transporter.sendMail(mailOptions).catch(e => console.log("Email Error:", e.message));
     }
-
-    // 4. Send the updated order back to the frontend
-    res.status(200).json(updatedOrder);
 
   } catch (err) {
     console.error("Status Update Error:", err);
-    res.status(500).json({ error: err.message });
+    // Only send error if we haven't already sent the success response
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
