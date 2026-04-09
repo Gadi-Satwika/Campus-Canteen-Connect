@@ -75,7 +75,7 @@ router.put('/status/:id', async (req, res) => {
     if (status === 'Deleted' && reason) {
         console.log("4. Entering 'Deleted' email block...");
         const mailOptions = {
-            from: `"RKV Canteen Support" <${process.env.EMAIL_USER}>`,
+            from: `"RKV Canteen Support" <${process.env.ADMIN_EMAIL}>`,
             to: updatedOrder.userEmail,
             subject: `❌ Order Cancelled - Token #${updatedOrder.tokenNumber}`,
             html: `<h3>Hi ${updatedOrder.userName},</h3>
@@ -90,7 +90,7 @@ router.put('/status/:id', async (req, res) => {
     if (status === 'Ready' && updatedOrder.userEmail) {
         console.log("4. Entering 'Ready' email block...");
         const mailOptions = {
-            from: `"RKV Canteen" <${process.env.EMAIL_USER}>`,
+            from: `"RKV Canteen" <${process.env.ADMIN_EMAIL}>`,
             to: updatedOrder.userEmail,
             subject: `🍔 Order Ready! Token #${updatedOrder.tokenNumber}`,
             html: `<h2>Hi ${updatedOrder.userName},</h2>
@@ -114,7 +114,7 @@ router.put('/status/:id', async (req, res) => {
 router.post('/send-cancellation-email', async (req, res) => {
   const { email, reason, orderId } = req.body;
   const mailOptions = {
-    from: process.env.EMAIL_USER, to: email,
+    from: process.env.ADMIN_EMAIL, to: email,
     subject: `❌ Order Cancelled - RKV Canteen`,
     html: `<p>Your order (ID: ${orderId}) was cancelled. Reason: ${reason}</p>`
   };
