@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API from '../../api';
 import FoodForm from '../../components/FoodForm';
 
 const Inventory = () => {
@@ -35,7 +36,7 @@ const Inventory = () => {
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/food/menu');
+      const res = await API.get('/food/menu');
       setItems(Array.isArray(res.data) ? res.data : []);
     } catch (err) { setItems([]); }
   };
@@ -44,7 +45,7 @@ const Inventory = () => {
 
   const handleToggleStock = async (id, currentStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/food/update/${id}`, { isAvailable: !currentStatus });
+      await API.put(`/food/update/${id}`, { isAvailable: !currentStatus });
       fetchItems();
       setActiveMenu(null);
     } catch (err) { alert("Update failed"); }
@@ -53,7 +54,7 @@ const Inventory = () => {
   const handleToggleForce = async (id, currentMode) => {
     try {
       const newMode = currentMode === 'Auto' ? 'Force Available' : 'Auto';
-      await axios.put(`http://localhost:5000/api/food/update/${id}`, { availabilityMode: newMode });
+      await API.put(`/food/update/${id}`, { availabilityMode: newMode });
       fetchItems();
       setActiveMenu(null);
     } catch (err) { alert("Update failed"); }
@@ -61,7 +62,7 @@ const Inventory = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Remove this item?")) {
-      await axios.delete(`http://localhost:5000/api/food/${id}`);
+      await API.delete(`/food/${id}`);
       fetchItems();
       setActiveMenu(null);
     }

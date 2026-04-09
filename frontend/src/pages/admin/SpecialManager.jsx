@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../../api';
 import axios from 'axios';
 
 const SpecialManager = () => {
@@ -7,7 +8,7 @@ const SpecialManager = () => {
 
     const fetchBanners = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/specials/all');
+            const res = await API.get('/specials/all');
             setBanners(res.data);
         } catch (err) { console.error("Fetch failed", err); }
     };
@@ -17,7 +18,7 @@ const SpecialManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/specials/add', {
+            await API.post('/specials/add', {
                 ...form,
                 price: Number(form.price),
                 quantity: Number(form.quantity)
@@ -30,7 +31,7 @@ const SpecialManager = () => {
 
     const handleDelete = async (id) => {
         if (window.confirm("Delete this banner?")) {
-            await axios.delete(`http://localhost:5000/api/specials/${id}`);
+            await API.delete(`/specials/${id}`);
             fetchBanners();
         }
     };

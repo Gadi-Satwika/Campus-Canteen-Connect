@@ -2,6 +2,8 @@ import { auth } from '../firebase';
 import { signOut } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 
+import API from '../api';
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Particles from "react-tsparticles";
@@ -54,7 +56,7 @@ const Menu = () => {
   // --- COMPLAINT LOGIC ---
   const fetchMyComplaints = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/complaints/all');
+      const res = await API.get('/complaints/all');
       setMyComplaints(res.data.filter(c => c.studentEmail === userDetails.email));
     } catch (err) { console.error("Error fetching complaints"); }
   };
@@ -69,12 +71,12 @@ const Menu = () => {
 
     try {
       if (editingCompId) {
-        await axios.put(`http://localhost:5000/api/complaints/update/${editingCompId}`, formData, {
+        await API.put(`/complaints/update/${editingCompId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert("Complaint Updated Successfully! ✨");
       } else {
-        await axios.post('http://localhost:5000/api/complaints/add', formData, {
+        await API.post('/complaints/add', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert("Complaint Submitted Successfully! ✅");
@@ -90,7 +92,7 @@ const Menu = () => {
   const deleteMyComplaint = async (id) => {
     if (window.confirm("Do you want to withdraw this complaint? It will stay in your history as 'Withdrawn'.")) {
       try {
-        await axios.put(`http://localhost:5000/api/complaints/update/${id}`, { status: 'Withdrawn' });
+        await API.put(`/complaints/update/${id}`, { status: 'Withdrawn' });
         alert("Complaint Withdrawn. ↩️");
         fetchMyComplaints();
       } catch (err) { alert("Error updating status."); }
@@ -128,7 +130,7 @@ const Menu = () => {
   useEffect(() => {
     const fetchLatest = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/announcements/latest');
+        const res = await API.get('/announcements/latest');
         if (res.data && res.data.status.toLowerCase() === 'active') {
           setAnnouncement(res.data);
           const lastRead = localStorage.getItem('lastReadId');
@@ -147,11 +149,11 @@ const Menu = () => {
   // --- BASE EFFECTS ---
   useEffect(() => { localStorage.setItem('canteenCart', JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem('orderHistory', JSON.stringify(history)); }, [history]);
-  useEffect(() => { axios.get('http://localhost:5000/api/food/menu').then(res => setItems(res.data)); }, []);
+  useEffect(() => { API.get('/food/menu').then(res => setItems(res.data)); }, []);
 
   useEffect(() => {
     const getServing = () => {
-      axios.get('http://localhost:5000/api/orders/current-serving').then(res => setCurrentServing(res.data.tokenNumber)).catch(() => {});
+      API.get('/orders/current-serving').then(res => setCurrentServing(res.data.tokenNumber)).catch(() => {});
     };
     getServing();
     const interval = setInterval(getServing, 5000);
@@ -174,7 +176,7 @@ const Menu = () => {
     }
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/orders/user/${userDetails.email}`);
+      const res = await API.get(`/orders/user/${userDetails.email}`);
       console.log("DATABASE RESPONDED WITH:", res.data);
       
       if (res.data && Array.isArray(res.data)) {
@@ -213,7 +215,7 @@ const Menu = () => {
     };
 
     try {
-      const res = await axios.post('http://localhost:5000/api/orders/place', orderPayload);
+      const res = await API.post('/orders/place', orderPayload);
       setHistory(prev => [res.data, ...prev]);
       setOrderSummary(res.data);
       setCart([]);

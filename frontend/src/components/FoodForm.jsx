@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../api';
 import axios from 'axios';
 
 const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
@@ -30,11 +31,11 @@ const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
     };
 
     if (editItem) {
-      await axios.put(`http://localhost:5000/api/food/edit/${editItem._id}`, payload);
+      await API.put(`/food/edit/${editItem._id}`, payload);
       alert("Item Updated successfully!");
       setEditItem(null); 
     } else {
-      await axios.post('http://localhost:5000/api/food/add', payload);
+      await API.post('/food/add', payload);
       alert("New Item Published!");
     }
     

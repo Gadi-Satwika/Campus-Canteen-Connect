@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../../api';
 import axios from 'axios';
 
 const AdminAnnouncements = () => {
@@ -7,7 +8,7 @@ const AdminAnnouncements = () => {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/announcements/all');
+      const res = await API.get('/announcements/all');
       setHistory(res.data);
     } catch (err) { console.error("History fetch failed"); }
   };
@@ -17,7 +18,7 @@ const AdminAnnouncements = () => {
   const handleSend = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/announcements/add', { ...msg, status: 'Active' });
+      await API.post('/announcements/add', { ...msg, status: 'Active' });
       alert("Broadcast Sent! 🚀");
       setMsg({ title: '', message: '', type: 'Info' });
       fetchHistory(); 
@@ -27,7 +28,7 @@ const AdminAnnouncements = () => {
   const handleRevoke = async (id) => {
     if (window.confirm("Revoke this announcement? Students will no longer see it.")) {
       try {
-        await axios.put(`http://localhost:5000/api/announcements/update/${id}`, { status: 'Revoked' });
+        await API.put(`/announcements/update/${id}`, { status: 'Revoked' });
         fetchHistory();
       } catch (err) { alert("Revoke failed."); }
     }

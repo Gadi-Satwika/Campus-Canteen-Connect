@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../../api';
 import axios from 'axios';
 
 const AdminComplaints = () => {
@@ -6,14 +7,14 @@ const AdminComplaints = () => {
 
     const fetchAll = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/complaints/all');
+            const res = await API.get('/complaints/all');
             setComplaints(res.data);
         } catch (err) { console.error("Error fetching complaints"); }
     };
 
     const markResolved = async (id) => {
         try {
-            await axios.put(`http://localhost:5000/api/complaints/update/${id}`, { status: 'Resolved' });
+            await API.put(`/complaints/update/${id}`, { status: 'Resolved' });
             alert("Issue marked as Resolved! ✅");
             fetchAll(); 
         } catch (err) {
@@ -42,7 +43,7 @@ const AdminComplaints = () => {
                     {c.image && (
                         <div style={{ filter: c.status === 'Withdrawn' ? 'grayscale(100%)' : 'none' }}>
                             <img 
-                                src={`http://localhost:5000${c.image}`} 
+                                src={`campus-canteen-connect-production.up.railway.app${c.image}`} 
                                 alt="Complaint" 
                                 style={{ width: '100%', height: '180px', objectFit: 'cover' }} 
                             />

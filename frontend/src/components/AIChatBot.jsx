@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import API from '../api';
 import axios from 'axios';
 
 const AIChatBot = () => {
@@ -25,7 +26,7 @@ const AIChatBot = () => {
         setMessage("");
 
         try {
-            const res = await axios.post('http://localhost:5000/api/ai/chat', { message });
+            const res = await API.post('/ai/chat', { message });
             setChatHistory(prev => [...prev, { role: 'bot', text: res.data.reply }]);
         } catch (err) {
             setChatHistory(prev => [...prev, { role: 'bot', text: "Sorry, I'm having trouble connecting to the kitchen right now! 🔌" }]);

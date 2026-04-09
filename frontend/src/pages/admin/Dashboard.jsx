@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../../api';
 import axios from 'axios';
 
 const Dashboard = () => {
@@ -41,8 +42,8 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [ordersRes, menuRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/orders/all'),
-        axios.get('http://localhost:5000/api/food/menu') 
+        API.get('/orders/all'),
+        API.get('/food/menu') 
       ]);
 
       const today = new Date().toDateString();

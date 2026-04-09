@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import API from '../../api';
 import axios from 'axios';
 
 const LiveOrders = () => {
@@ -12,7 +13,7 @@ const LiveOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/orders/all');
+      const res = await API.get('/orders/all');
       setAllOrders(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error("Database Fetch Error:", err); }
   };
@@ -23,12 +24,12 @@ const LiveOrders = () => {
     if (!reason) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/orders/status/${orderId}`, { 
+      await API.put(`/orders/status/${orderId}`, { 
         status: 'Deleted',
         reason: reason 
       });
 
-      await axios.post(`http://localhost:5000/api/orders/send-cancellation-email`, {
+      await API.post(`/orders/send-cancellation-email`, {
         email: userEmail,
         reason: reason,
         orderId: orderId
@@ -54,7 +55,7 @@ const LiveOrders = () => {
       const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
       scanner.render(async (decodedText) => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/orders/${decodedText}`);
+          const res = await API.get(`/orders/${decodedText}`);
           setScannedOrder(res.data);
           scanner.clear();
           setScannerOpen(false);
@@ -67,7 +68,7 @@ const LiveOrders = () => {
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/status/${id}`, { status: newStatus });
+      await API.put(`/orders/status/${id}`, { status: newStatus });
       fetchOrders(); 
       if (newStatus === 'Ready') alert("✅ Order Ready & Email Sent!");
       if (newStatus === 'Collected') {
@@ -83,7 +84,7 @@ const handleDeleteOrder = async (id) => {
   const reason = window.prompt("Enter reason for cancellation (sent to student email):");
     if (reason) {
         try {
-            await axios.put(`http://localhost:5000/api/orders/status/${id}`, { 
+            await API.put(`/orders/status/${id}`, { 
                 status: 'Deleted',
                 reason: reason 
             });
@@ -102,7 +103,7 @@ const handleDeleteOrder = async (id) => {
     const id = document.getElementById('manualInput').value;
     if(!id) return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/orders/${id}`);
+      const res = await API.get(`/orders/${id}`);
       setScannedOrder(res.data);
       setScannerOpen(false);
     } catch (e) { alert("ID not found"); }
@@ -131,7 +132,7 @@ const groupedHistory = allOrders
   }, {});
 
   const markAsReady = async (orderId) => {
-    await axios.put(`http://localhost:5000/api/orders/update/${orderId}`, { status: 'Ready' });
+    await API.put(`/orders/update/${orderId}`, { status: 'Ready' });
   };
 
   return (
