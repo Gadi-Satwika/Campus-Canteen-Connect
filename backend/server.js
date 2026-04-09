@@ -6,6 +6,8 @@ const cors = require('cors');
 
 const path = require('path');
 
+const transporter = require('./config/mailer');
+
 // ... after your other imports
 const announcementRoutes = require('./routes/announcementRoutes');
 
