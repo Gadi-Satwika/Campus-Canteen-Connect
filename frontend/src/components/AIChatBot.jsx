@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../api';
-import axios from 'axios';
 
 const AIChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +10,6 @@ const AIChatBot = () => {
     const [loading, setLoading] = useState(false);
     const chatEndRef = useRef(null);
 
-    // Auto-scroll to bottom of chat
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [chatHistory]);
@@ -36,49 +34,77 @@ const AIChatBot = () => {
     };
 
     return (
-        <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ 
+            position: 'fixed', 
+            bottom: '20px', 
+            right: '20px', 
+            zIndex: 9999, 
+            fontFamily: 'Inter, sans-serif',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end'
+        }}>
             {/* --- CHAT WINDOW --- */}
             {isOpen && (
                 <div style={{ 
-                    width: '350px', height: '500px', background: 'white', borderRadius: '25px', 
-                    boxShadow: '0 15px 50px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column',
-                    overflow: 'hidden', marginBottom: '20px', animation: 'fadeInUp 0.3s ease-out'
+                    width: '90vw',          /* Mobile friendly width */
+                    maxWidth: '350px',      /* Desktop cap */
+                    height: '70vh',         /* Responsive height */
+                    maxHeight: '500px', 
+                    background: 'white', 
+                    borderRadius: '20px', 
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.25)', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    overflow: 'hidden', 
+                    marginBottom: '15px', 
+                    animation: 'fadeInUp 0.3s ease-out'
                 }}>
                     {/* Header */}
-                    <div style={{ background: '#800000', color: 'white', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ background: '#800000', color: 'white', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '10px', height: '10px', background: '#10B981', borderRadius: '50%' }}></div>
-                            <span style={{ fontWeight: 'bold' }}>Campus Assistant</span>
+                            <div style={{ width: '8px', height: '8px', background: '#10B981', borderRadius: '50%' }}></div>
+                            <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Assistant</span>
                         </div>
-                        <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+                        <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.5rem', lineHeight: '1' }}>×</button>
                     </div>
 
                     {/* Chat Body */}
-                    <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ flex: 1, padding: '15px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', background: '#fcfcfc' }}>
                         {chatHistory.map((chat, i) => (
                             <div key={i} style={{ 
                                 alignSelf: chat.role === 'user' ? 'flex-end' : 'flex-start',
-                                maxWidth: '80%', padding: '12px 16px', borderRadius: '18px',
-                                background: chat.role === 'user' ? '#800000' : '#F1F5F9',
+                                maxWidth: '85%', 
+                                padding: '10px 14px', 
+                                borderRadius: chat.role === 'user' ? '18px 18px 0 18px' : '18px 18px 18px 0',
+                                background: chat.role === 'user' ? '#800000' : '#E2E8F0',
                                 color: chat.role === 'user' ? 'white' : '#1E293B',
-                                fontSize: '0.9rem', lineHeight: '1.4'
+                                fontSize: '0.85rem', 
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
                             }}>
                                 {chat.text}
                             </div>
                         ))}
-                        {loading && <div style={{ color: '#94A3B8', fontSize: '0.8rem', fontStyle: 'italic' }}>AI is thinking...</div>}
+                        {loading && <div style={{ color: '#94A3B8', fontSize: '0.75rem', paddingLeft: '5px' }}>Thinking...</div>}
                         <div ref={chatEndRef} />
                     </div>
 
                     {/* Input Area */}
-                    <form onSubmit={handleSendMessage} style={{ padding: '15px', borderTop: '1px solid #F1F5F9', display: 'flex', gap: '10px' }}>
+                    <form onSubmit={handleSendMessage} style={{ padding: '12px', borderTop: '1px solid #eee', display: 'flex', gap: '8px', background: 'white' }}>
                         <input 
-                            placeholder="Ask me anything..." 
+                            placeholder="Type a message..." 
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            style={{ flex: 1, padding: '10px 15px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none' }}
+                            style={{ 
+                                flex: 1, 
+                                padding: '10px', 
+                                borderRadius: '10px', 
+                                border: '1px solid #ddd', 
+                                outline: 'none',
+                                fontSize: '0.9rem' 
+                            }}
                         />
-                        <button type="submit" style={{ background: '#800000', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '12px', cursor: 'pointer' }}>
+                        <button type="submit" style={{ background: '#800000', color: 'white', border: 'none', padding: '0 15px', borderRadius: '10px', cursor: 'pointer' }}>
                             ➤
                         </button>
                     </form>
@@ -89,20 +115,17 @@ const AIChatBot = () => {
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 style={{ 
-                    width: '65px', height: '65px', borderRadius: '50%', background: '#800000', color: 'white',
-                    border: 'none', cursor: 'pointer', fontSize: '1.8rem', boxShadow: '0 8px 25px rgba(128,0,0,0.3)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s'
+                    width: '55px', height: '55px', borderRadius: '50%', background: '#800000', color: 'white',
+                    border: 'none', cursor: 'pointer', fontSize: '1.5rem', boxShadow: '0 5px 15px rgba(128,0,0,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
-                onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
             >
-                {isOpen ? '💬' : '🤖'}
+                {isOpen ? '❌' : '🤖'}
             </button>
 
-            {/* Animation CSS */}
             <style>{`
                 @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
+                    from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>

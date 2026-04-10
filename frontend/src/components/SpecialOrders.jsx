@@ -74,7 +74,7 @@ const SpecialOrders = ({ addToCart }) => {
                     <span style={{ background: '#FFD700', color: '#800000', padding: '3px 10px', borderRadius: '50px', fontSize: '0.65rem', fontWeight: 'bold', display: 'inline-block', marginBottom: '10px' }}>
                         CAMPUS EXCLUSIVE
                     </span>
-                    <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: '900', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{b.title}</h1>
+                    <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{b.title}</h1>
                     <p style={{ margin: '6px 0 18px 0', opacity: 0.9, fontSize: '0.9rem', lineHeight: '1.4' }}>{b.sub}</p>
                     
                     <button 

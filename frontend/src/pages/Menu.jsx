@@ -246,33 +246,75 @@ const Menu = () => {
         interactivity: { events: { onHover: { enable: true, mode: "repulse" } } }
       }} />
 
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', background: '#800000', color: 'white', position: 'sticky', top: 0, zIndex: 2000, boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ background: 'transparent', color: '#800000', padding: '6px 12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1.2rem' }}><img 
-          src="/Rgukt_Logo_noBG.png" 
-          alt="RGUKT Logo" 
-          style={{ 
-            width: '45px', 
-            height: '45px', 
-            objectFit: 'contain'
-          }} 
-        /></div>
-          <h2 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '1px' }}>CAMPUS CANTEEN</h2>
-        </div>
-        <div style={{ display: 'flex', gap: '25px', alignItems: 'center', fontWeight: '600' }}>
-          <span onClick={() => setActiveCategory(null)} style={{ cursor: 'pointer' }}>Menu</span>
-          <span onClick={() => setViewHistory(true)} style={{ cursor: 'pointer' }}>📜 History</span>
-          <div onClick={() => setShowCart(true)} style={{ cursor: 'pointer', position: 'relative' }}>
-            🛒 {cart.length > 0 && <span style={{ background: '#FFD700', color: 'black', borderRadius: '50%', padding: '2px 8px', fontSize: '0.75rem', position: 'absolute', top: '-10px', right: '-10px', border: '2px solid #800000' }}>{cart.length}</span>}
-          </div>
-          <div onClick={() => { setOpenAnnounce(true); if (announcement) { setShowBellDot(false); localStorage.setItem('lastReadId', announcement._id); } }} style={{ cursor: 'pointer', position: 'relative', fontSize: '1.4rem' }}>
-            🔔
-            {showBellDot && <span style={{ position: 'absolute', top: '0', right: '0', width: '10px', height: '10px', background: '#EF4444', borderRadius: '50%', border: '2px solid white', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></span>}
-          </div>
-          <div onClick={() => { setShowComplaint(true); fetchMyComplaints(); }} style={{ cursor: 'pointer', fontSize: '1.4rem' }}>💬</div>
-          <button onClick={handleLogout} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>Logout</button>
-        </div>
-      </nav>
+      <nav style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  padding: '10px 15px', 
+  background: '#800000', 
+  color: 'white', 
+  position: 'sticky', 
+  top: 0, 
+  zIndex: 2000, 
+  boxShadow: '0 4px 15px rgba(0,0,0,0.2)' 
+}}>
+  {/* Left Side: Logo & Minimal Title */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <img 
+      src="/Rgukt_Logo_noBG.png" 
+      alt="Logo" 
+      style={{ width: '35px', height: '35px', objectFit: 'contain' }} 
+    />
+    <h2 style={{ margin: 0, fontSize: '0.9rem', letterSpacing: '1px', display: window.innerWidth < 350 ? 'none' : 'block' }}>
+      CANTEEN
+    </h2>
+  </div>
+
+  {/* Right Side: Icons Only for Mobile */}
+  <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+    
+    {/* Menu Icon/Text - Simplified */}
+    <span onClick={() => setActiveCategory(null)} style={{ cursor: 'pointer', fontSize: '1.2rem' }} title="Menu">
+      🍴<span style={{ display: window.innerWidth < 600 ? 'none' : 'inline', marginLeft: '5px' }}>Menu</span>
+    </span>
+
+    {/* History */}
+    <span onClick={() => setViewHistory(true)} style={{ cursor: 'pointer', fontSize: '1.2rem' }} title="History">
+      📜<span style={{ display: window.innerWidth < 600 ? 'none' : 'inline', marginLeft: '5px' }}>History</span>
+    </span>
+
+    {/* Cart */}
+    <div onClick={() => setShowCart(true)} style={{ cursor: 'pointer', position: 'relative', fontSize: '1.3rem' }}>
+      🛒
+      {cart.length > 0 && (
+        <span style={{ 
+          background: '#FFD700', color: 'black', borderRadius: '50%', 
+          padding: '2px 6px', fontSize: '0.65rem', position: 'absolute', 
+          top: '-5px', right: '-10px', border: '1.5px solid #800000', fontWeight: 'bold' 
+        }}>
+          {cart.length}
+        </span>
+      )}
+    </div>
+
+    {/* Notifications */}
+    <div onClick={() => { setOpenAnnounce(true); if (announcement) { setShowBellDot(false); localStorage.setItem('lastReadId', announcement._id); } }} 
+         style={{ cursor: 'pointer', position: 'relative', fontSize: '1.3rem' }}>
+      🔔
+      {showBellDot && (
+        <span style={{ position: 'absolute', top: '2px', right: '0', width: '8px', height: '8px', background: '#EF4444', borderRadius: '50%', border: '1.5px solid white' }}></span>
+      )}
+    </div>
+
+    {/* Complaints */}
+    <div onClick={() => { setShowComplaint(true); fetchMyComplaints(); }} style={{ cursor: 'pointer', fontSize: '1.3rem' }}>💬</div>
+
+    {/* Logout - Iconized for mobile */}
+    <button onClick={handleLogout} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px', borderRadius: '6px', cursor: 'pointer' }}>
+       {window.innerWidth < 600 ? '🚪' : 'Logout'}
+    </button>
+  </div>
+</nav>
 
       <div style={{ padding: '20px', zIndex: 10, maxWidth: '1100px', margin: '0 auto', position: 'relative', minHeight: '100vh' }}>
         <SpecialOrders addToCart={addToCart} />

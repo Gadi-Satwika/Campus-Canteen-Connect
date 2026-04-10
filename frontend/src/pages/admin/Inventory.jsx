@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import API from '../../api';
 import FoodForm from '../../components/FoodForm';
 
@@ -8,16 +7,20 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeMenu, setActiveMenu] = useState(null);
   const [editItem, setEditItem] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
- const checkFoodStatus = (item) => {
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const checkFoodStatus = (item) => {
     const hour = new Date().getHours();
-    
-
     const mode = item.availabilityMode ? item.availabilityMode.toLowerCase() : 'auto';
     const isManualOut = item.isAvailable === false;
 
     if (isManualOut) return { canOrder: false, reason: "Sold Out" };
-    
     if (mode !== 'auto') return { canOrder: true, reason: "" };
 
     const timings = {
@@ -26,13 +29,13 @@ const Inventory = () => {
         'Snacks':    { start: 16, end: 24 }
     };
 
-    const window = timings[item.category]; 
-    if (window) {
-        if (hour >= window.start && hour < window.end) return { canOrder: true, reason: "" };
+    const windowTime = timings[item.category]; 
+    if (windowTime) {
+        if (hour >= windowTime.start && hour < windowTime.end) return { canOrder: true, reason: "" };
         return { canOrder: false, reason: "Time Locked" };
     }
     return { canOrder: true, reason: "" };
-};
+  };
 
   const fetchItems = async () => {
     try {
@@ -73,32 +76,73 @@ const Inventory = () => {
   ) || [];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <h1 style={{ fontWeight: '900', color: '#1E293B', margin: 0 }}>Menu Repository</h1>
+    <div style={{ padding: isMobile ? '10px' : '20px' }}>
+      {/* HEADER & SEARCH */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        flexWrap: 'wrap', 
+        gap: '15px',
+        marginBottom: '20px'
+      }}>
+        <h1 style={{ fontWeight: '900', color: '#1E293B', margin: 0, fontSize: isMobile ? '1.5rem' : '2rem' }}>
+          Menu Repository
+        </h1>
         <input 
           type="text" 
           placeholder="Search Item..." 
-          style={{ padding: '12px 20px', borderRadius: '15px', border: '1px solid #E2E8F0', width: '100%', maxWidth: '300px' }}
+          style={{ 
+            padding: '12px 20px', 
+            borderRadius: '15px', 
+            border: '1px solid #E2E8F0', 
+            width: '100%', 
+            maxWidth: isMobile ? '100%' : '300px',
+            fontSize: '16px' // Prevents iOS zoom on focus
+          }}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="inventory-grid" style={{ display: 'flex', flexDirection: 'row', gap: '2rem', marginTop: '30px' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row', 
+        gap: '20px', 
+        marginTop: '10px' 
+      }}>
 
-        <div style={{ flex: '0 0 380px', background: '#FFFDF5', padding: '2rem', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: 'fit-content' }}>
-          <h3 style={{ color: '#800000', marginTop: 0 }}>{editItem ? '📝 Edit Entry' : '✨ New Entry'}</h3>
+        {/* FORM SECTION */}
+        <div style={{ 
+          flex: isMobile ? '1' : '0 0 380px', 
+          background: '#FFFDF5', 
+          padding: isMobile ? '1.5rem' : '2rem', 
+          borderRadius: '24px', 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)', 
+          height: 'fit-content' 
+        }}>
+          <h3 style={{ color: '#800000', marginTop: 0, fontSize: '1.2rem' }}>
+            {editItem ? '📝 Edit Entry' : '✨ New Entry'}
+          </h3>
           <FoodForm onUploadSuccess={fetchItems} editItem={editItem} setEditItem={setEditItem} />
         </div>
 
-        <div style={{ flex: 1, background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        {/* TABLE SECTION */}
+        <div style={{ 
+          flex: 1, 
+          background: 'white', 
+          padding: isMobile ? '1rem' : '1.5rem', 
+          borderRadius: '24px', 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)', 
+          overflowX: 'auto', // Keep table scrollable on small screens
+          maxWidth: '100%'
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? '450px' : 'auto' }}>
             <thead>
               <tr style={{ textAlign: 'left', color: '#94A3B8', fontSize: '0.75rem', borderBottom: '2px solid #F8FAFC' }}>
-                <th style={{ padding: '15px' }}>Item</th>
-                <th>Status Flags</th>
+                <th style={{ padding: '15px 10px' }}>Item</th>
+                <th>Flags</th>
                 <th>Price</th>
-                <th>Action</th>
+                <th style={{ textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -110,33 +154,51 @@ const Inventory = () => {
                   <tr key={item._id} style={{ 
                       borderBottom: '1px solid #F8FAFC',
                       opacity: isTimeLocked ? 0.4 : 1, 
-                      background: isTimeLocked ? '#F8FAFC' : 'white', 
-                      transition: 'opacity 0.3s ease'
+                      background: isTimeLocked ? '#F8FAFC' : 'white'
                   }}>
-                    <td style={{ padding: '15px' }}>
-                      <div style={{ fontWeight: '800' }}>{item.name}</div>
+                    <td style={{ padding: '12px 10px' }}>
+                      <div style={{ fontWeight: '800', fontSize: '0.85rem' }}>{item.name}</div>
                       <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>{item.category}</div>
                     </td>
                     
                     <td>
-                      <div style={{ display: 'flex', gap: '5px' }}>
-                          <span style={{ fontSize: '0.6rem', padding: '3px 7px', borderRadius: '5px', background: item.isAvailable ? '#DCFCE7' : '#FEE2E2', color: item.isAvailable ? '#166534' : '#991B1B' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ 
+                            fontSize: '0.55rem', 
+                            padding: '2px 5px', 
+                            borderRadius: '4px', 
+                            textAlign: 'center',
+                            width: 'fit-content',
+                            background: item.isAvailable ? '#DCFCE7' : '#FEE2E2', 
+                            color: item.isAvailable ? '#166534' : '#991B1B',
+                            fontWeight: 'bold'
+                          }}>
                               {item.isAvailable ? 'INSTOCK' : 'SOLDOUT'}
                           </span>
                           {isTimeLocked && (
-                            <span style={{ fontSize: '0.6rem', padding: '3px 7px', borderRadius: '5px', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1' }}>🕒 TIMELOCKED</span>
+                            <span style={{ fontSize: '0.55rem', padding: '2px 5px', borderRadius: '4px', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', textAlign: 'center', width: 'fit-content' }}>🕒 LOCK</span>
                           )}
                       </div>
                     </td>
 
-                    <td style={{ fontWeight: '900', color: '#800000' }}>₹{item.price}</td>
+                    <td style={{ fontWeight: '900', color: '#800000', fontSize: '0.9rem' }}>₹{item.price}</td>
 
-                    <td style={{ position: 'relative' }}>
-                      <button onClick={() => setActiveMenu(activeMenu === item._id ? null : item._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>⋮</button>
+                    <td style={{ position: 'relative', textAlign: 'center' }}>
+                      <button onClick={() => setActiveMenu(activeMenu === item._id ? null : item._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '10px' }}>⋮</button>
                       
                       {activeMenu === item._id && (
-                        <div style={{ position: 'absolute', right: '40px', top: '0', zIndex: 100, background: 'white', border: '1px solid #E2E8F0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '180px', padding: '5px' }}>
-                          
+                        <div style={{ 
+                          position: 'absolute', 
+                          right: isMobile ? '10px' : '40px', 
+                          top: '30px', 
+                          zIndex: 200, 
+                          background: 'white', 
+                          border: '1px solid #E2E8F0', 
+                          borderRadius: '12px', 
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.15)', 
+                          width: '170px', 
+                          padding: '5px' 
+                        }}>
                           {isTimeLocked ? (
                               <button onClick={() => handleToggleForce(item._id, 'Auto')} style={{ width: '100%', padding: '10px', border: 'none', background: '#FFFBEB', cursor: 'pointer', textAlign: 'left', fontWeight: 'bold', color: '#B45309', fontSize: '0.75rem', borderRadius: '8px' }}>
                                  🔓 Force Enable
