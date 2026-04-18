@@ -4,6 +4,8 @@ import { auth, provider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import LoginBackground from '../components/LoginBackground';
 
+import API from '../api';
+
 const Login = () => {
   const navigate = useNavigate();
   const [width, setWidth] = useState(window.innerWidth);
@@ -28,43 +30,54 @@ const Login = () => {
   const isMobile = width < 768;
 
   const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const email = user.email;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-      // 1. Check if the email is allowed (Student or Staff)
-      if (email.endsWith("@rguktrkv.ac.in") || email === "canteenstaffrgukt@gmail.com") {
-        
-        // 2. Prepare user object to store in LocalStorage (CRITICAL for session persistence)
-        const userData = {
-          uid: user.uid,
-          name: user.displayName,
-          email: user.email,
-          photo: user.photoURL,
-          isAdmin: email === "canteenstaffrgukt@gmail.com"
-        };
-
-        // 3. Save to localStorage so it survives page refreshes
-        localStorage.setItem('canteenUser', JSON.stringify(userData));
-
-        // 4. Redirect based on email
-        if (email === "canteenstaffrgukt@gmail.com") {
-          navigate('/admin/dashboard', {replace: true});
-        } else {
-          navigate('/menu', { replace: true });
-        }
-
-      } else {
-        // Deny access for non-college emails
-        await auth.signOut();
-        alert("Access Denied! Use your @rguktrkv.ac.in ID.");
-      }
-    } catch (err) { 
-      console.error("Login Error:", err); 
-      alert("Authentication failed. Please try again.");
+    // Safety Check: Ensure Firebase actually gave us an email
+    if (!user || !user.email) {
+      console.error("Firebase didn't return user data");
+      return;
     }
-  };
+
+    const email = user.email;
+
+    if (email.endsWith("@rguktrkv.ac.in") || email === "canteenstaffrgukt@gmail.com") {
+      const studentId = email.split('@')[0].toUpperCase();
+
+      const userData = {
+        uid: user.uid,
+        name: user.displayName || "User", // Fallback if name is empty
+        email: email,
+        studentId: studentId,
+        isAdmin: email === "canteenstaffrgukt@gmail.com"
+      };
+
+      // USE AXIOS (API.js)
+      try {
+        await API.post('/users/sync', userData);
+        console.log("Database Sync Successful");
+      } catch (syncError) {
+        console.error("Database Sync Failed but continuing login:", syncError);
+        // We don't want to block the user if the DB sync fails, 
+        // but for evaluation, we want this to work.
+      }
+
+      localStorage.setItem('canteenUser', JSON.stringify(userData));
+
+      if (email === "canteenstaffrgukt@gmail.com") {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/menu', { replace: true });
+      }
+    } else {
+      await auth.signOut();
+      alert("Access Denied! Use your @rguktrkv.ac.in ID.");
+    }
+  } catch (err) {
+    console.error("Login Error:", err);
+  }
+};
 
   const styles = {
     container: { 

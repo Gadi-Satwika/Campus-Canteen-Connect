@@ -17,6 +17,8 @@ const specialRoutes = require('./routes/specialRoutes');
 
 const aiRoutes = require('./routes/aiRoutes');
 
+const userRoutes = require('./routes/userRoutes');
+
 const app = express();
 
 // Middleware
@@ -45,6 +47,8 @@ app.use('/api/specials', specialRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/ai', aiRoutes);
+
+app.use('/api/users', userRoutes);
 
 
 app.get('/test-email', async (req, res) => {
