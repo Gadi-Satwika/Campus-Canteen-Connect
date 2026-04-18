@@ -31,7 +31,7 @@ const FoodForm = ({ onUploadSuccess, editItem, setEditItem }) => {
     };
 
     if (editItem) {
-      await API.put(`/food/edit/${editItem._id}`, payload);
+      await API.put(`/food/update/${editItem._id}`, payload);
       alert("Item Updated successfully!");
       setEditItem(null); 
     } else {
