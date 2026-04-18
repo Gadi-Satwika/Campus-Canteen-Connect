@@ -34,19 +34,19 @@ const CartDrawer = ({ isOpen, onClose, cart, updateQty, removeFromCart, checkout
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <input placeholder="Name" value={userDetails.name} onChange={e => setUserDetails({...userDetails, name: e.target.value})} style={{ padding: '12px', borderRadius: '10px', border: '1px solid #DDD' }} />
               {/* --- EMAIL INPUT (FIXED) --- */}
-<input 
-  type="email"
-  placeholder="Email Address" 
-  value={userDetails.email} 
-  onChange={e => setUserDetails({...userDetails, email: e.target.value})} 
-  style={{ 
-    padding: '12px', 
-    borderRadius: '10px', 
-    border: '1px solid #DDD',
-    width: '100%',
-    boxSizing: 'border-box'
-  }} 
-/>
+                <input 
+                  type="email"
+                  placeholder="Email Address" 
+                  value={userDetails.email} 
+                  readOnly
+                  style={{ 
+                    padding: '12px', 
+                    borderRadius: '10px', 
+                    border: '1px solid #DDD',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }} 
+                />
               <input placeholder="Dorm/Block" value={userDetails.dorm} onChange={e => setUserDetails({...userDetails, dorm: e.target.value})} style={{ padding: '12px', borderRadius: '10px', border: '1px solid #DDD' }} />
               <button onClick={onPlaceOrder} style={{ padding: '15px', background: '#16A34A', color: 'white', borderRadius: '12px', fontWeight: 'bold' }}>Confirm & Pay</button>
               <button onClick={() => setCheckoutStep(1)} style={{ background: 'none', border: 'none', color: '#64748B' }}>Back to Cart</button>

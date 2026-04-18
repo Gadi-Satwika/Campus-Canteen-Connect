@@ -247,17 +247,17 @@ const Menu = () => {
       }} />
 
       <nav style={{ 
-  display: 'flex', 
-  justifyContent: 'space-between', 
-  alignItems: 'center', 
-  padding: '10px 15px', 
-  background: '#800000', 
-  color: 'white', 
-  position: 'sticky', 
-  top: 0, 
-  zIndex: 2000, 
-  boxShadow: '0 4px 15px rgba(0,0,0,0.2)' 
-}}>
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '10px 15px', 
+        background: '#800000', 
+        color: 'white', 
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 2000, 
+        boxShadow: '0 4px 15px rgba(0,0,0,0.2)' 
+      }}>
   {/* Left Side: Logo & Minimal Title */}
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
     <img 
